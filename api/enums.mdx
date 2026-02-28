@@ -1,0 +1,258 @@
+---
+title: Enumerations
+description: Enum types used in TableCalendar for configuration and modes
+---
+
+## Overview
+
+TableCalendar uses several enum types to configure calendar behavior, appearance, and interaction modes.
+
+## CalendarFormat
+
+Formats that the calendar can display.
+
+```dart
+enum CalendarFormat { month, twoWeeks, week }
+```
+
+### Values
+
+<ResponseField name="month" type="CalendarFormat">
+  Displays a full month view with all weeks of the month
+</ResponseField>
+
+<ResponseField name="twoWeeks" type="CalendarFormat">
+  Displays two weeks at a time
+</ResponseField>
+
+<ResponseField name="week" type="CalendarFormat">
+  Displays a single week view
+</ResponseField>
+
+### Example
+
+```dart
+CalendarFormat _calendarFormat = CalendarFormat.month;
+
+TableCalendar(
+  calendarFormat: _calendarFormat,
+  availableCalendarFormats: const {
+    CalendarFormat.month: 'Month',
+    CalendarFormat.twoWeeks: '2 weeks',
+    CalendarFormat.week: 'Week',
+  },
+  onFormatChanged: (format) {
+    setState(() {
+      _calendarFormat = format;
+    });
+  },
+  // ...
+)
+```
+
+<Note>
+  Users can switch between formats using the format button in the header or by swiping vertically if `AvailableGestures` allows it.
+</Note>
+
+## RangeSelectionMode
+
+Modes that range selection can operate in.
+
+```dart
+enum RangeSelectionMode { disabled, toggledOff, toggledOn, enforced }
+```
+
+### Values
+
+<ResponseField name="disabled" type="RangeSelectionMode">
+  Range selection is completely disabled. Single day selection only.
+</ResponseField>
+
+<ResponseField name="toggledOff" type="RangeSelectionMode">
+  Range selection is currently off, but can be toggled on by long-pressing a day cell
+</ResponseField>
+
+<ResponseField name="toggledOn" type="RangeSelectionMode">
+  Range selection is currently active, but can be toggled off by long-pressing a day cell
+</ResponseField>
+
+<ResponseField name="enforced" type="RangeSelectionMode">
+  Range selection is always on and cannot be toggled off
+</ResponseField>
+
+### Example
+
+```dart
+DateTime? _rangeStart;
+DateTime? _rangeEnd;
+
+TableCalendar(
+  rangeSelectionMode: RangeSelectionMode.toggledOn,
+  rangeStartDay: _rangeStart,
+  rangeEndDay: _rangeEnd,
+  onRangeSelected: (start, end, focusedDay) {
+    setState(() {
+      _rangeStart = start;
+      _rangeEnd = end;
+    });
+  },
+  // ...
+)
+```
+
+### Behavior Details
+
+- **disabled**: Only `onDaySelected` callbacks are triggered
+- **toggledOff**: Long press toggles to range selection mode
+- **toggledOn**: Users select two dates to define a range. Long press toggles back to single selection
+- **enforced**: Users must select ranges; single day selection is not available
+
+<Note>
+  When using range selection modes other than `disabled`, provide the `onRangeSelected` callback to handle range selections.
+</Note>
+
+## StartingDayOfWeek
+
+Days of the week that the calendar can start with.
+
+```dart
+enum StartingDayOfWeek {
+  monday,
+  tuesday,
+  wednesday,
+  thursday,
+  friday,
+  saturday,
+  sunday,
+}
+```
+
+### Values
+
+<ResponseField name="monday" type="StartingDayOfWeek">
+  Calendar weeks start on Monday
+</ResponseField>
+
+<ResponseField name="tuesday" type="StartingDayOfWeek">
+  Calendar weeks start on Tuesday
+</ResponseField>
+
+<ResponseField name="wednesday" type="StartingDayOfWeek">
+  Calendar weeks start on Wednesday
+</ResponseField>
+
+<ResponseField name="thursday" type="StartingDayOfWeek">
+  Calendar weeks start on Thursday
+</ResponseField>
+
+<ResponseField name="friday" type="StartingDayOfWeek">
+  Calendar weeks start on Friday
+</ResponseField>
+
+<ResponseField name="saturday" type="StartingDayOfWeek">
+  Calendar weeks start on Saturday
+</ResponseField>
+
+<ResponseField name="sunday" type="StartingDayOfWeek">
+  Calendar weeks start on Sunday
+</ResponseField>
+
+### Example
+
+```dart
+// Monday-Sunday week format (common in Europe)
+TableCalendar(
+  startingDayOfWeek: StartingDayOfWeek.monday,
+  // ...
+)
+
+// Sunday-Saturday week format (common in US)
+TableCalendar(
+  startingDayOfWeek: StartingDayOfWeek.sunday,
+  // ...
+)
+```
+
+<Note>
+  The default starting day is Sunday. Use `StartingDayOfWeek.monday` for a Monday-Sunday week format common in many countries.
+</Note>
+
+## AvailableGestures
+
+Gestures available for the calendar.
+
+```dart
+enum AvailableGestures { none, verticalSwipe, horizontalSwipe, all }
+```
+
+### Values
+
+<ResponseField name="none" type="AvailableGestures">
+  No swipe gestures enabled. Calendar is only interactive via buttons (header chevrons, format button)
+</ResponseField>
+
+<ResponseField name="verticalSwipe" type="AvailableGestures">
+  Vertical swipe gestures enabled. Swipe up/down to change calendar format
+</ResponseField>
+
+<ResponseField name="horizontalSwipe" type="AvailableGestures">
+  Horizontal swipe gestures enabled. Swipe left/right to navigate between calendar pages
+</ResponseField>
+
+<ResponseField name="all" type="AvailableGestures">
+  All swipe gestures enabled (both vertical and horizontal)
+</ResponseField>
+
+### Example
+
+```dart
+// Enable all gestures (default)
+TableCalendar(
+  availableGestures: AvailableGestures.all,
+  // ...
+)
+
+// Only horizontal swipe for page navigation
+TableCalendar(
+  availableGestures: AvailableGestures.horizontalSwipe,
+  // ...
+)
+
+// No gestures - button-only interaction
+TableCalendar(
+  availableGestures: AvailableGestures.none,
+  // ...
+)
+```
+
+### Gesture Behaviors
+
+**Horizontal Swipe**
+- Swipe left: Navigate to next calendar page
+- Swipe right: Navigate to previous calendar page
+- Respects `firstDay` and `lastDay` boundaries
+
+**Vertical Swipe**
+- Swipe up: Change to smaller format (month → twoWeeks → week)
+- Swipe down: Change to larger format (week → twoWeeks → month)
+- Only works if `onFormatChanged` callback is provided
+- Uses formats defined in `availableCalendarFormats`
+
+<Note>
+  When using `AvailableGestures.none`, ensure you provide navigation controls via the header buttons or custom UI elements.
+</Note>
+
+### Configuration Example
+
+```dart
+import 'package:simple_gesture_detector/simple_gesture_detector.dart';
+
+TableCalendar(
+  availableGestures: AvailableGestures.all,
+  simpleSwipeConfig: const SimpleSwipeConfig(
+    verticalThreshold: 25.0,
+    swipeDetectionBehavior: SwipeDetectionBehavior.continuousDistinct,
+  ),
+  // ...
+)
+```

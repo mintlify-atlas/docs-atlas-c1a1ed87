@@ -1,0 +1,370 @@
+---
+title: Day Selection
+description: Implement single and multiple day selection with callbacks and predicates
+---
+
+TableCalendar provides flexible day selection through a predicate-based system that gives you complete control over which days appear selected and how selection changes are handled.
+
+## How Day Selection Works
+
+Unlike traditional selection APIs, TableCalendar uses a **predicate function** to determine which day is selected. This approach gives you full control over the selection state and logic.
+
+<Info>
+The `selectedDayPredicate` is called for each visible day to determine its selection state. This is defined in `lib/src/table_calendar.dart:181`
+</Info>
+
+## Basic Single Selection
+
+<Steps>
+
+### Define state variables
+
+Store the selected day and focused day in your widget's state:
+
+```dart
+class _MyCalendarState extends State<MyCalendar> {
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  
+  @override
+  Widget build(BuildContext context) {
+    // ...
+  }
+}
+```
+
+### Implement the selection predicate
+
+Use `selectedDayPredicate` to mark a day as selected. The predicate receives each day and should return `true` for selected days:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  selectedDayPredicate: (day) {
+    // Use `selectedDayPredicate` to determine which day is currently selected.
+    // If this returns true, then `day` will be marked as selected.
+    
+    // Using `isSameDay` is recommended to disregard
+    // the time-part of compared DateTime objects.
+    return isSameDay(_selectedDay, day);
+  },
+);
+```
+
+<Info>
+This example is from `example/lib/pages/basics_example.dart:31-38`
+</Info>
+
+### Handle day selection
+
+Implement the `onDaySelected` callback to update your state when a day is tapped:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+  onDaySelected: (selectedDay, focusedDay) {
+    if (!isSameDay(_selectedDay, selectedDay)) {
+      // Call `setState()` when updating the selected day
+      setState(() {
+        _selectedDay = selectedDay;
+        _focusedDay = focusedDay;
+      });
+    }
+  },
+);
+```
+
+<Info>
+This example is from `example/lib/pages/basics_example.dart:39-47`
+</Info>
+
+</Steps>
+
+## Understanding isSameDay
+
+The `isSameDay` utility function compares only the date portion of DateTime objects, ignoring the time component:
+
+```dart
+// From lib/src/shared/utils.dart:51-57
+bool isSameDay(DateTime? a, DateTime? b) {
+  if (a == null || b == null) {
+    return false;
+  }
+  
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+```
+
+<Warning>
+Always use `isSameDay` when comparing dates for selection. Direct DateTime comparison includes time components and will cause unexpected behavior.
+</Warning>
+
+## Callback Signatures
+
+The `OnDaySelected` callback provides both the selected day and the focused day:
+
+```dart
+// From lib/src/table_calendar.dart:18-22
+typedef OnDaySelected = void Function(
+  DateTime selectedDay,
+  DateTime focusedDay,
+);
+```
+
+- **selectedDay**: The day that was just tapped
+- **focusedDay**: The day that should now be focused (used to determine visible month)
+
+## Multiple Day Selection
+
+For advanced use cases where users can select multiple days, use a `Set` or `LinkedHashSet` to track selected days:
+
+```dart
+class _MyCalendarState extends State<MyCalendar> {
+  final Set<DateTime> _selectedDays = LinkedHashSet<DateTime>(
+    equals: isSameDay,
+    hashCode: getHashCode,
+  );
+  late final ValueNotifier<DateTime> _focusedDay = ValueNotifier(DateTime.now());
+  
+  @override
+  Widget build(BuildContext context) {
+    return TableCalendar(
+      firstDay: kFirstDay,
+      lastDay: kLastDay,
+      focusedDay: _focusedDay.value,
+      selectedDayPredicate: (day) => _selectedDays.contains(day),
+      onDaySelected: (selectedDay, focusedDay) {
+        setState(() {
+          if (_selectedDays.contains(selectedDay)) {
+            _selectedDays.remove(selectedDay);
+          } else {
+            _selectedDays.add(selectedDay);
+          }
+          
+          _focusedDay.value = focusedDay;
+        });
+      },
+    );
+  }
+}
+```
+
+<Info>
+This example is adapted from `example/lib/pages/complex_example.dart:23-82`
+</Info>
+
+### Custom Hash Code for DateTime
+
+When using `LinkedHashSet` with custom equality, provide a matching hash function:
+
+```dart
+// From example/lib/utils.dart:39-41
+int getHashCode(DateTime key) {
+  return key.day * 1000000 + key.month * 10000 + key.year;
+}
+```
+
+## Long Press Selection
+
+Handle long press events separately from taps using `onDayLongPressed`:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+  onDaySelected: (selectedDay, focusedDay) {
+    setState(() {
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
+    });
+  },
+  onDayLongPressed: (selectedDay, focusedDay) {
+    // Handle long press
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Long pressed'),
+        content: Text('Date: $selectedDay'),
+      ),
+    );
+  },
+);
+```
+
+<Info>
+The long press callback is defined in `lib/src/table_calendar.dart:193`
+</Info>
+
+## Disabled Days
+
+Previous selection from happening on specific days using `enabledDayPredicate`:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+  enabledDayPredicate: (day) {
+    // Disable weekends
+    return day.weekday != DateTime.saturday && day.weekday != DateTime.sunday;
+  },
+  onDaySelected: (selectedDay, focusedDay) {
+    setState(() {
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
+    });
+  },
+);
+```
+
+### Handling Disabled Day Taps
+
+You can respond to taps on disabled days with `onDisabledDayTapped`:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  enabledDayPredicate: (day) => day.weekday != DateTime.saturday && day.weekday != DateTime.sunday,
+  onDisabledDayTapped: (day) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${day} is not available')),
+    );
+  },
+);
+```
+
+<Info>
+The disabled day handling is implemented in `lib/src/table_calendar.dart:357-365` and `lib/src/table_calendar.dart:740-752`
+</Info>
+
+## Page Jumping on Selection
+
+By default, tapping an outside day (from a different month) won't change the visible page. Enable `pageJumpingEnabled` to navigate to that month:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  pageJumpingEnabled: true, // Jump to the selected month
+  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+  onDaySelected: (selectedDay, focusedDay) {
+    setState(() {
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
+    });
+  },
+);
+```
+
+## Selection State Management
+
+<Tabs>
+  <Tab title="StatefulWidget">
+    Best for simple selection state managed within a single screen:
+    
+    ```dart
+    class MyCalendar extends StatefulWidget {
+      @override
+      State<MyCalendar> createState() => _MyCalendarState();
+    }
+    
+    class _MyCalendarState extends State<MyCalendar> {
+      DateTime? _selectedDay;
+      DateTime _focusedDay = DateTime.now();
+      
+      @override
+      Widget build(BuildContext context) {
+        return TableCalendar(
+          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+          onDaySelected: (selectedDay, focusedDay) {
+            setState(() {
+              _selectedDay = selectedDay;
+              _focusedDay = focusedDay;
+            });
+          },
+        );
+      }
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Provider/Riverpod">
+    For app-wide selection state or complex state management:
+    
+    ```dart
+    // State provider
+    final selectedDayProvider = StateProvider<DateTime?>((ref) => null);
+    
+    // In your widget
+    class MyCalendar extends ConsumerWidget {
+      @override
+      Widget build(BuildContext context, WidgetRef ref) {
+        final selectedDay = ref.watch(selectedDayProvider);
+        
+        return TableCalendar(
+          selectedDayPredicate: (day) => isSameDay(selectedDay, day),
+          onDaySelected: (selectedDay, focusedDay) {
+            ref.read(selectedDayProvider.notifier).state = selectedDay;
+          },
+        );
+      }
+    }
+    ```
+  </Tab>
+  
+  <Tab title="ValueNotifier">
+    For reactive selection updates without full rebuilds:
+    
+    ```dart
+    class _MyCalendarState extends State<MyCalendar> {
+      late final ValueNotifier<DateTime?> _selectedDay;
+      late final ValueNotifier<DateTime> _focusedDay;
+      
+      @override
+      void initState() {
+        super.initState();
+        _selectedDay = ValueNotifier(null);
+        _focusedDay = ValueNotifier(DateTime.now());
+      }
+      
+      @override
+      void dispose() {
+        _selectedDay.dispose();
+        _focusedDay.dispose();
+        super.dispose();
+      }
+      
+      @override
+      Widget build(BuildContext context) {
+        return ValueListenableBuilder<DateTime?>(
+          valueListenable: _selectedDay,
+          builder: (context, selected, _) {
+            return TableCalendar(
+              selectedDayPredicate: (day) => isSameDay(selected, day),
+              onDaySelected: (selectedDay, focusedDay) {
+                _selectedDay.value = selectedDay;
+                _focusedDay.value = focusedDay;
+              },
+            );
+          },
+        );
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Tip>
+For better performance with multiple selection, use `LinkedHashSet` with custom equality instead of `List`, as it provides O(1) lookups.
+</Tip>

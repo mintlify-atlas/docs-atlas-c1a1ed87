@@ -1,0 +1,411 @@
+---
+title: Range Selection
+description: Enable users to select date ranges with start and end dates
+---
+
+TableCalendar supports range selection out of the box, allowing users to select a start date and an end date. The widget provides built-in visual feedback and flexible control over the selection mode.
+
+## Range Selection Modes
+
+Range selection behavior is controlled by the `RangeSelectionMode` enum:
+
+```dart
+// From lib/src/table_calendar.dart:33
+enum RangeSelectionMode { disabled, toggledOff, toggledOn, enforced }
+```
+
+- **disabled**: Range selection is completely disabled
+- **toggledOff**: Range selection is off but can be enabled by long-pressing a day
+- **toggledOn**: Range selection is active and can be disabled by long-pressing a day  
+- **enforced**: Range selection is always on and cannot be toggled off
+
+<Info>
+The range selection mode determines how the calendar responds to user interactions. The mode can be changed dynamically during runtime.
+</Info>
+
+## Basic Range Selection
+
+<Steps>
+
+### Define state variables
+
+Track the range start, range end, and selection mode in your state:
+
+```dart
+class _MyCalendarState extends State<MyCalendar> {
+  RangeSelectionMode _rangeSelectionMode = RangeSelectionMode.toggledOn;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
+  
+  @override
+  Widget build(BuildContext context) {
+    // ...
+  }
+}
+```
+
+<Info>
+This example is from `example/lib/pages/range_example.dart:16-22`
+</Info>
+
+### Implement range selection callback
+
+Handle range selection with the `onRangeSelected` callback:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+  rangeStartDay: _rangeStart,
+  rangeEndDay: _rangeEnd,
+  rangeSelectionMode: _rangeSelectionMode,
+  onRangeSelected: (start, end, focusedDay) {
+    setState(() {
+      _selectedDay = null;
+      _focusedDay = focusedDay;
+      _rangeStart = start;
+      _rangeEnd = end;
+      _rangeSelectionMode = RangeSelectionMode.toggledOn;
+    });
+  },
+);
+```
+
+<Info>
+This example is from `example/lib/pages/range_example.dart:50-58`
+</Info>
+
+### Handle day selection in range mode
+
+When switching from range selection to single day selection, clear the range:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  rangeStartDay: _rangeStart,
+  rangeEndDay: _rangeEnd,
+  rangeSelectionMode: _rangeSelectionMode,
+  onDaySelected: (selectedDay, focusedDay) {
+    if (!isSameDay(_selectedDay, selectedDay)) {
+      setState(() {
+        _selectedDay = selectedDay;
+        _focusedDay = focusedDay;
+        _rangeStart = null; // Important to clean those
+        _rangeEnd = null;
+        _rangeSelectionMode = RangeSelectionMode.toggledOff;
+      });
+    }
+  },
+);
+```
+
+<Info>
+This example is from `example/lib/pages/range_example.dart:39-49`
+</Info>
+
+</Steps>
+
+## Range Selection Callback
+
+The `OnRangeSelected` callback signature provides start, end, and focused day:
+
+```dart
+// From lib/src/table_calendar.dart:24-30
+typedef OnRangeSelected = void Function(
+  DateTime? start,
+  DateTime? end,
+  DateTime focusedDay,
+);
+```
+
+- **start**: The beginning of the selected range (can be null during selection)
+- **end**: The end of the selected range (can be null during selection)
+- **focusedDay**: The currently focused day
+
+<Note>
+Both `start` and `end` can be null. When the user taps the first date, only `start` will have a value. When they tap the second date, both will be set.
+</Note>
+
+## How Range Selection Works
+
+The range selection logic follows these rules:
+
+1. **First tap**: Sets the range start, `end` remains null
+2. **Second tap after start**: 
+   - If tapped day is after start → Sets it as range end
+   - If tapped day is before start → Sets it as new range start, tapped day becomes end
+   - If same day as start → No change
+3. **Third tap**: Starts a new range selection
+
+```dart
+// From lib/src/table_calendar.dart:369-381
+if (_firstSelectedDay == null) {
+  _firstSelectedDay = day;
+  widget.onRangeSelected!(_firstSelectedDay, null, _focusedDay.value);
+} else {
+  if (day.isAfter(_firstSelectedDay!)) {
+    widget.onRangeSelected!(_firstSelectedDay, day, _focusedDay.value);
+    _firstSelectedDay = null;
+  } else if (day.isBefore(_firstSelectedDay!)) {
+    widget.onRangeSelected!(day, _firstSelectedDay, _focusedDay.value);
+    _firstSelectedDay = null;
+  }
+}
+```
+
+## Enforced Range Selection
+
+To always keep range selection active without allowing users to toggle it off:
+
+```dart
+class _MyCalendarState extends State<MyCalendar> {
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
+  
+  @override
+  Widget build(BuildContext context) {
+    return TableCalendar(
+      firstDay: kFirstDay,
+      lastDay: kLastDay,
+      focusedDay: _focusedDay,
+      rangeStartDay: _rangeStart,
+      rangeEndDay: _rangeEnd,
+      rangeSelectionMode: RangeSelectionMode.enforced,
+      onRangeSelected: (start, end, focusedDay) {
+        setState(() {
+          _focusedDay = focusedDay;
+          _rangeStart = start;
+          _rangeEnd = end;
+        });
+      },
+    );
+  }
+}
+```
+
+<Warning>
+When using `RangeSelectionMode.enforced`, the `onDaySelected` callback will not be triggered even if provided.
+</Warning>
+
+## Toggleable Range Selection
+
+Allow users to toggle between single day and range selection with long press:
+
+```dart
+class _MyCalendarState extends State<MyCalendar> {
+  RangeSelectionMode _rangeSelectionMode = RangeSelectionMode.toggledOff;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
+  
+  @override
+  Widget build(BuildContext context) {
+    return TableCalendar(
+      firstDay: kFirstDay,
+      lastDay: kLastDay,
+      focusedDay: _focusedDay,
+      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+      rangeStartDay: _rangeStart,
+      rangeEndDay: _rangeEnd,
+      rangeSelectionMode: _rangeSelectionMode,
+      onDaySelected: (selectedDay, focusedDay) {
+        if (!isSameDay(_selectedDay, selectedDay)) {
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+            _rangeStart = null;
+            _rangeEnd = null;
+            _rangeSelectionMode = RangeSelectionMode.toggledOff;
+          });
+        }
+      },
+      onRangeSelected: (start, end, focusedDay) {
+        setState(() {
+          _selectedDay = null;
+          _focusedDay = focusedDay;
+          _rangeStart = start;
+          _rangeEnd = end;
+          _rangeSelectionMode = RangeSelectionMode.toggledOn;
+        });
+      },
+    );
+  }
+}
+```
+
+<Info>
+The toggle behavior is implemented in `lib/src/table_calendar.dart:402-415`. Long-pressing a day switches between `toggledOn` and `toggledOff` modes.
+</Info>
+
+## Working with Range Events
+
+Combine range selection with event loading to show events for the selected range:
+
+```dart
+class _MyCalendarState extends State<MyCalendar> {
+  late final ValueNotifier<List<Event>> _selectedEvents;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
+  
+  @override
+  void initState() {
+    super.initState();
+    _selectedEvents = ValueNotifier([]);
+  }
+  
+  @override
+  void dispose() {
+    _selectedEvents.dispose();
+    super.dispose();
+  }
+  
+  List<Event> _getEventsForDay(DateTime day) {
+    return kEvents[day] ?? [];
+  }
+  
+  List<Event> _getEventsForRange(DateTime start, DateTime end) {
+    final days = daysInRange(start, end);
+    
+    return [
+      for (final d in days) ..._getEventsForDay(d),
+    ];
+  }
+  
+  void _onRangeSelected(DateTime? start, DateTime? end, DateTime focusedDay) {
+    setState(() {
+      _focusedDay = focusedDay;
+      _rangeStart = start;
+      _rangeEnd = end;
+    });
+    
+    // `start` or `end` could be null
+    if (start != null && end != null) {
+      _selectedEvents.value = _getEventsForRange(start, end);
+    } else if (start != null) {
+      _selectedEvents.value = _getEventsForDay(start);
+    } else if (end != null) {
+      _selectedEvents.value = _getEventsForDay(end);
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TableCalendar<Event>(
+          firstDay: kFirstDay,
+          lastDay: kLastDay,
+          focusedDay: _focusedDay,
+          rangeStartDay: _rangeStart,
+          rangeEndDay: _rangeEnd,
+          rangeSelectionMode: RangeSelectionMode.toggledOn,
+          eventLoader: _getEventsForDay,
+          onRangeSelected: _onRangeSelected,
+        ),
+        Expanded(
+          child: ValueListenableBuilder<List<Event>>(
+            valueListenable: _selectedEvents,
+            builder: (context, value, _) {
+              return ListView.builder(
+                itemCount: value.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text('${value[index]}'),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+```
+
+<Info>
+This example is adapted from `example/lib/pages/events_example.dart:46-86`
+</Info>
+
+### Helper Function for Date Ranges
+
+Use the `daysInRange` utility to get all days between two dates:
+
+```dart
+// From example/lib/utils.dart:44-50
+List<DateTime> daysInRange(DateTime first, DateTime last) {
+  final dayCount = last.difference(first).inDays + 1;
+  return List.generate(
+    dayCount,
+    (index) => DateTime.utc(first.year, first.month, first.day + index),
+  );
+}
+```
+
+## Styling the Range
+
+Customize the appearance of the selected range using `CalendarStyle`:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  rangeStartDay: _rangeStart,
+  rangeEndDay: _rangeEnd,
+  rangeSelectionMode: RangeSelectionMode.toggledOn,
+  calendarStyle: CalendarStyle(
+    rangeHighlightColor: Colors.blue.withOpacity(0.2),
+    rangeHighlightScale: 1.0,
+    rangeStartDecoration: BoxDecoration(
+      color: Colors.blue,
+      shape: BoxShape.circle,
+    ),
+    rangeEndDecoration: BoxDecoration(
+      color: Colors.blue,
+      shape: BoxShape.circle,
+    ),
+    withinRangeDecoration: BoxDecoration(
+      color: Colors.transparent,
+    ),
+  ),
+  onRangeSelected: (start, end, focusedDay) {
+    setState(() {
+      _rangeStart = start;
+      _rangeEnd = end;
+      _focusedDay = focusedDay;
+    });
+  },
+);
+```
+
+<Info>
+The range highlighting is rendered in `lib/src/table_calendar.dart:595-624`
+</Info>
+
+## Best Practices
+
+<Tip>
+**Clear conflicting state**: When switching between single day and range selection, always clear the conflicting state variables to avoid UI inconsistencies.
+</Tip>
+
+<Tip>
+**Handle null values**: The `start` and `end` parameters in `onRangeSelected` can be null during selection. Always check for null before using these values.
+</Tip>
+
+<Tip>
+**Use ValueNotifier for events**: When displaying events for a range, use `ValueNotifier` to efficiently update the event list without rebuilding the entire calendar.
+</Tip>
+
+<Note>
+Range selection and single day selection can coexist in your state, but only one should be active at a time based on the `rangeSelectionMode`.
+</Note>

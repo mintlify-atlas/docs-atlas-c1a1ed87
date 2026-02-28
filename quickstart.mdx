@@ -1,80 +1,388 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get a working calendar up and running in minutes
 ---
 
-## Get started in three steps
+This guide will help you create a fully functional, interactive calendar with TableCalendar. By the end, you'll have a calendar that responds to user taps, changes formats, and updates dynamically.
 
-Get your documentation site running locally and make your first customization.
+## Basic calendar
 
-### Step 1: Set up your local environment
+Let's start with the simplest possible calendar implementation.
+
+<Steps>
+  <Step title="Create a stateful widget">
+    TableCalendar needs to track state for the focused day and selected day, so you'll need a `StatefulWidget`:
+    
+    ```dart
+    import 'package:flutter/material.dart';
+    import 'package:table_calendar/table_calendar.dart';
+    
+    class MyCalendar extends StatefulWidget {
+      const MyCalendar({super.key});
+    
+      @override
+      State<MyCalendar> createState() => _MyCalendarState();
+    }
+    
+    class _MyCalendarState extends State<MyCalendar> {
+      DateTime _focusedDay = DateTime.now();
+    
+      @override
+      Widget build(BuildContext context) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('TableCalendar')),
+          body: TableCalendar(
+            firstDay: DateTime.utc(2010, 10, 16),
+            lastDay: DateTime.utc(2030, 3, 14),
+            focusedDay: _focusedDay,
+          ),
+        );
+      }
+    }
+    ```
+    
+    <Info>
+      **Required properties:**
+      - `firstDay` - The first available day. Users cannot access dates before this.
+      - `lastDay` - The last available day. Users cannot access dates after this.
+      - `focusedDay` - The currently targeted day that determines which month is visible.
+    </Info>
+  </Step>
+  
+  <Step title="Test your calendar">
+    Run your app and you should see a calendar displaying the current month. You can swipe horizontally to change months, but tapping days doesn't do anything yet.
+    
+    <Tip>
+      Choose `firstDay` and `lastDay` based on your use case. For a booking app, you might start from today. For a historical tracker, you might allow past dates.
+    </Tip>
+  </Step>
+</Steps>
+
+## Add interactivity
+
+Now let's make the calendar respond to user interactions.
+
+<Steps>
+  <Step title="Add selection state">
+    Add a variable to track the selected day:
+    
+    ```dart
+    class _MyCalendarState extends State<MyCalendar> {
+      DateTime _focusedDay = DateTime.now();
+      DateTime? _selectedDay;
+      
+      // ... rest of the code
+    }
+    ```
+  </Step>
+  
+  <Step title="Implement day selection">
+    Add `selectedDayPredicate` and `onDaySelected` callbacks to handle day taps:
+    
+    ```dart
+    TableCalendar(
+      firstDay: DateTime.utc(2010, 10, 16),
+      lastDay: DateTime.utc(2030, 3, 14),
+      focusedDay: _focusedDay,
+      selectedDayPredicate: (day) {
+        // Use `selectedDayPredicate` to determine which day is currently selected.
+        // If this returns true, then `day` will be marked as selected.
+        
+        // Using `isSameDay` is recommended to disregard
+        // the time-part of compared DateTime objects.
+        return isSameDay(_selectedDay, day);
+      },
+      onDaySelected: (selectedDay, focusedDay) {
+        if (!isSameDay(_selectedDay, selectedDay)) {
+          // Call `setState()` when updating the selected day
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+        }
+      },
+    )
+    ```
+    
+    <Note>
+      The `isSameDay` utility function compares only the date parts of `DateTime` objects, ignoring the time. This is important because `DateTime` objects include both date and time information.
+    </Note>
+  </Step>
+  
+  <Step title="Handle page changes">
+    Add the `onPageChanged` callback to update `_focusedDay` when users swipe between months:
+    
+    ```dart
+    TableCalendar(
+      // ... other properties
+      onPageChanged: (focusedDay) {
+        // No need to call `setState()` here
+        _focusedDay = focusedDay;
+      },
+    )
+    ```
+    
+    <Warning>
+      You must update `_focusedDay` in `onPageChanged` to prevent the calendar from resetting when the widget rebuilds. However, you don't need to call `setState()` here - just update the stored value.
+    </Warning>
+  </Step>
+</Steps>
+
+## Add format switching
+
+TableCalendar supports multiple calendar formats: month view, two-week view, and week view.
+
+<Steps>
+  <Step title="Add format state">
+    Add a variable to track the current calendar format:
+    
+    ```dart
+    class _MyCalendarState extends State<MyCalendar> {
+      CalendarFormat _calendarFormat = CalendarFormat.month;
+      DateTime _focusedDay = DateTime.now();
+      DateTime? _selectedDay;
+      
+      // ... rest of the code
+    }
+    ```
+  </Step>
+  
+  <Step title="Implement format switching">
+    Add `calendarFormat` and `onFormatChanged` to enable the format toggle button:
+    
+    ```dart
+    TableCalendar(
+      // ... other properties
+      calendarFormat: _calendarFormat,
+      onFormatChanged: (format) {
+        if (_calendarFormat != format) {
+          // Call `setState()` when updating calendar format
+          setState(() {
+            _calendarFormat = format;
+          });
+        }
+      },
+    )
+    ```
+    
+    <Tip>
+      The format button appears in the calendar header by default. Users can tap it to cycle through month, two-week, and week views.
+    </Tip>
+  </Step>
+</Steps>
+
+## Complete example
+
+Here's the complete code for a fully interactive calendar:
+
+<CodeGroup>
+```dart Basic interactive calendar
+import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
+
+class MyCalendar extends StatefulWidget {
+  const MyCalendar({super.key});
+
+  @override
+  State<MyCalendar> createState() => _MyCalendarState();
+}
+
+class _MyCalendarState extends State<MyCalendar> {
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('TableCalendar - Basics'),
+      ),
+      body: TableCalendar(
+        firstDay: DateTime.utc(2010, 10, 16),
+        lastDay: DateTime.utc(2030, 3, 14),
+        focusedDay: _focusedDay,
+        calendarFormat: _calendarFormat,
+        selectedDayPredicate: (day) {
+          return isSameDay(_selectedDay, day);
+        },
+        onDaySelected: (selectedDay, focusedDay) {
+          if (!isSameDay(_selectedDay, selectedDay)) {
+            setState(() {
+              _selectedDay = selectedDay;
+              _focusedDay = focusedDay;
+            });
+          }
+        },
+        onFormatChanged: (format) {
+          if (_calendarFormat != format) {
+            setState(() {
+              _calendarFormat = format;
+            });
+          }
+        },
+        onPageChanged: (focusedDay) {
+          _focusedDay = focusedDay;
+        },
+      ),
+    );
+  }
+}
+```
+
+```dart With helper constants
+import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
+
+class MyCalendar extends StatefulWidget {
+  const MyCalendar({super.key});
+
+  @override
+  State<MyCalendar> createState() => _MyCalendarState();
+}
+
+class _MyCalendarState extends State<MyCalendar> {
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  
+  // Define reasonable date boundaries
+  final DateTime _kFirstDay = DateTime(DateTime.now().year, DateTime.now().month - 3, DateTime.now().day);
+  final DateTime _kLastDay = DateTime(DateTime.now().year, DateTime.now().month + 3, DateTime.now().day);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('TableCalendar - Basics'),
+      ),
+      body: TableCalendar(
+        firstDay: _kFirstDay,
+        lastDay: _kLastDay,
+        focusedDay: _focusedDay,
+        calendarFormat: _calendarFormat,
+        selectedDayPredicate: (day) {
+          return isSameDay(_selectedDay, day);
+        },
+        onDaySelected: (selectedDay, focusedDay) {
+          if (!isSameDay(_selectedDay, selectedDay)) {
+            setState(() {
+              _selectedDay = selectedDay;
+              _focusedDay = focusedDay;
+            });
+          }
+        },
+        onFormatChanged: (format) {
+          if (_calendarFormat != format) {
+            setState(() {
+              _calendarFormat = format;
+            });
+          }
+        },
+        onPageChanged: (focusedDay) {
+          _focusedDay = focusedDay;
+        },
+      ),
+    );
+  }
+}
+```
+</CodeGroup>
+
+## Understanding the callbacks
+
+TableCalendar uses several callbacks to communicate user interactions:
 
 <AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+  <Accordion title="selectedDayPredicate">
+    This callback determines which day should be marked as selected. Return `true` for the selected day.
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
+    ```dart
+    selectedDayPredicate: (day) {
+      return isSameDay(_selectedDay, day);
+    }
+    ```
+    
+    It's called for every visible day, so keep the logic simple and fast.
   </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+  
+  <Accordion title="onDaySelected">
+    This callback is triggered when a user taps a day. You receive both the selected day and the new focused day.
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
+    ```dart
+    onDaySelected: (selectedDay, focusedDay) {
+      setState(() {
+        _selectedDay = selectedDay;
+        _focusedDay = focusedDay;
+      });
+    }
+    ```
+    
+    Always update both `_selectedDay` and `_focusedDay` to ensure the calendar stays in sync.
+  </Accordion>
+  
+  <Accordion title="onPageChanged">
+    This callback is triggered when the user swipes to a different month.
+    
+    ```dart
+    onPageChanged: (focusedDay) {
+      _focusedDay = focusedDay;
+    }
+    ```
+    
+    Update `_focusedDay` but don't call `setState()` - this callback happens during page animation.
+  </Accordion>
+  
+  <Accordion title="onFormatChanged">
+    This callback is triggered when the user taps the format button to switch between month, two-week, and week views.
+    
+    ```dart
+    onFormatChanged: (format) {
+      setState(() {
+        _calendarFormat = format;
+      });
+    }
+    ```
+    
+    Update your format state and call `setState()` to rebuild with the new format.
   </Accordion>
 </AccordionGroup>
 
-### Step 2: Deploy your changes
+## Common pitfalls
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+<Warning>
+  **Setting focusedDay to DateTime.now()**
+  
+  If you set `focusedDay: DateTime.now()` directly in the build method, the calendar will reset to the current date every time the widget rebuilds (including hot reload). Always store and update `focusedDay` in your state.
+</Warning>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Warning>
+  **Not using isSameDay**
+  
+  DateTime objects include time information. Two DateTimes representing the same day but different times will not be equal. Always use `isSameDay()` to compare dates in calendar contexts.
+</Warning>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+<Warning>
+  **Calling setState in onPageChanged**
+  
+  Don't call `setState()` in `onPageChanged`. Just update the stored `_focusedDay` value. Calling `setState()` during page animation can cause performance issues.
+</Warning>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that you have a working calendar, explore more features:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Add events" icon="calendar-days" href="/events">
+    Display events, appointments, and markers on calendar dates
+  </Card>
+  <Card title="Customize styling" icon="palette" href="/customization">
+    Change colors, fonts, and spacing to match your design
+  </Card>
+  <Card title="Range selection" icon="calendar-range" href="/range-selection">
+    Allow users to select date ranges for bookings and reservations
+  </Card>
+  <Card title="Custom builders" icon="code" href="/builders">
+    Override default UI with your own widgets for complete control
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

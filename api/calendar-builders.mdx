@@ -1,0 +1,361 @@
+---
+title: CalendarBuilders
+description: Custom builders for TableCalendar widget components
+---
+
+Class containing all custom builders for `TableCalendar`, allowing you to completely customize the appearance of calendar cells, event markers, and other components.
+
+## Type Definitions
+
+### SingleMarkerBuilder
+
+```dart
+typedef SingleMarkerBuilder<T> = Widget? Function(
+  BuildContext context,
+  DateTime day,
+  T event,
+);
+```
+
+Signature for a function that creates a single event marker for a given `day`.
+Contains a single `event` associated with that `day`.
+
+### MarkerBuilder
+
+```dart
+typedef MarkerBuilder<T> = Widget? Function(
+  BuildContext context,
+  DateTime day,
+  List<T> events,
+);
+```
+
+Signature for a function that creates an event marker for a given `day`.
+Contains a list of `events` associated with that `day`.
+
+### HighlightBuilder
+
+```dart
+typedef HighlightBuilder = Widget? Function(
+  BuildContext context,
+  DateTime day,
+  bool isWithinRange,
+);
+```
+
+Signature for a function that creates a background highlight for a given `day`.
+Used for highlighting current range selection.
+Contains a value determining if the given `day` falls within the selected range.
+
+## Constructor
+
+```dart
+const CalendarBuilders<T>({
+  FocusedDayBuilder? prioritizedBuilder,
+  FocusedDayBuilder? todayBuilder,
+  FocusedDayBuilder? selectedBuilder,
+  FocusedDayBuilder? rangeStartBuilder,
+  FocusedDayBuilder? rangeEndBuilder,
+  FocusedDayBuilder? withinRangeBuilder,
+  FocusedDayBuilder? outsideBuilder,
+  FocusedDayBuilder? disabledBuilder,
+  FocusedDayBuilder? holidayBuilder,
+  FocusedDayBuilder? defaultBuilder,
+  HighlightBuilder? rangeHighlightBuilder,
+  SingleMarkerBuilder<T>? singleMarkerBuilder,
+  MarkerBuilder<T>? markerBuilder,
+  DayBuilder? dowBuilder,
+  DayBuilder? headerTitleBuilder,
+  Widget? Function(BuildContext context, int weekNumber)? weekNumberBuilder,
+});
+```
+
+## Properties
+
+### Day Cell Builders
+
+<ParamField path="prioritizedBuilder" type="FocusedDayBuilder?" default="null">
+  Custom builder for day cells, with a priority over any other builder.
+  
+  When provided, this builder will be used for all day cells, overriding all other builders.
+</ParamField>
+
+<ParamField path="todayBuilder" type="FocusedDayBuilder?" default="null">
+  Custom builder for a day cell that matches the current day.
+</ParamField>
+
+<ParamField path="selectedBuilder" type="FocusedDayBuilder?" default="null">
+  Custom builder for day cells that are currently marked as selected by `selectedDayPredicate`.
+</ParamField>
+
+<ParamField path="rangeStartBuilder" type="FocusedDayBuilder?" default="null">
+  Custom builder for a day cell that is the start of current range selection.
+</ParamField>
+
+<ParamField path="rangeEndBuilder" type="FocusedDayBuilder?" default="null">
+  Custom builder for a day cell that is the end of current range selection.
+</ParamField>
+
+<ParamField path="withinRangeBuilder" type="FocusedDayBuilder?" default="null">
+  Custom builder for day cells that fall within the currently selected range.
+</ParamField>
+
+<ParamField path="outsideBuilder" type="FocusedDayBuilder?" default="null">
+  Custom builder for day cells, of which the `day.month` is different than `focusedDay.month`.
+  This will affect day cells that do not match the currently focused month.
+</ParamField>
+
+<ParamField path="disabledBuilder" type="FocusedDayBuilder?" default="null">
+  Custom builder for day cells that have been disabled.
+  
+  This refers to dates disabled by returning false in `enabledDayPredicate`,
+  as well as dates that are outside of the bounds set up by `firstDay` and `lastDay`.
+</ParamField>
+
+<ParamField path="holidayBuilder" type="FocusedDayBuilder?" default="null">
+  Custom builder for day cells that are marked as holidays by `holidayPredicate`.
+</ParamField>
+
+<ParamField path="defaultBuilder" type="FocusedDayBuilder?" default="null">
+  Custom builder for day cells that do not match any other builder.
+</ParamField>
+
+### Range Selection Builder
+
+<ParamField path="rangeHighlightBuilder" type="HighlightBuilder?" default="null">
+  Custom builder for background highlight of range selection.
+  If `isWithinRange` is true, then `day` is within the selected range.
+</ParamField>
+
+### Event Marker Builders
+
+<ParamField path="singleMarkerBuilder" type="SingleMarkerBuilder<T>?" default="null">
+  Custom builder for a single event marker. Each of those will be displayed in a `Row` above of the day cell.
+  You can adjust markers' position with `CalendarStyle` properties.
+  
+  If `singleMarkerBuilder` is not specified, a default event marker will be displayed (customizable with `CalendarStyle`).
+</ParamField>
+
+<ParamField path="markerBuilder" type="MarkerBuilder<T>?" default="null">
+  Custom builder for event markers. Use to provide your own marker UI for each day cell.
+  Using `markerBuilder` will override `singleMarkerBuilder` and default event markers.
+</ParamField>
+
+### Other Builders
+
+<ParamField path="dowBuilder" type="DayBuilder?" default="null">
+  Custom builder for days of the week labels (Mon, Tue, Wed, etc.).
+</ParamField>
+
+<ParamField path="headerTitleBuilder" type="DayBuilder?" default="null">
+  Use to customize header's title using different widget.
+</ParamField>
+
+<ParamField path="weekNumberBuilder" type="Widget? Function(BuildContext context, int weekNumber)?" default="null">
+  Custom builder for number of the week labels.
+</ParamField>
+
+## Example Usage
+
+### Basic Day Cell Customization
+
+```dart
+TableCalendar(
+  calendarBuilders: CalendarBuilders(
+    // Customize today's cell
+    todayBuilder: (context, day, focusedDay) {
+      return Container(
+        margin: const EdgeInsets.all(4.0),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.orange,
+          shape: BoxShape.circle,
+        ),
+        child: Text(
+          '${day.day}',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    },
+    // Customize selected day
+    selectedBuilder: (context, day, focusedDay) {
+      return Container(
+        margin: const EdgeInsets.all(4.0),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.green,
+          shape: BoxShape.circle,
+        ),
+        child: Text(
+          '${day.day}',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      );
+    },
+  ),
+  // ... other properties
+);
+```
+
+### Custom Event Markers
+
+```dart
+TableCalendar<Event>(
+  eventLoader: _getEventsForDay,
+  calendarBuilders: CalendarBuilders<Event>(
+    // Single marker builder - called for each event
+    singleMarkerBuilder: (context, day, event) {
+      return Container(
+        width: 7.0,
+        height: 7.0,
+        margin: const EdgeInsets.symmetric(horizontal: 1.5),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: event.color,
+        ),
+      );
+    },
+    // Or use markerBuilder for full control
+    markerBuilder: (context, day, events) {
+      if (events.isEmpty) return null;
+      
+      return Positioned(
+        bottom: 1,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: events.take(3).map((event) {
+            return Container(
+              width: 8.0,
+              height: 8.0,
+              margin: const EdgeInsets.symmetric(horizontal: 1.0),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: event.color,
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    },
+  ),
+  // ... other properties
+);
+```
+
+### Custom Range Highlight
+
+```dart
+TableCalendar(
+  rangeSelectionMode: RangeSelectionMode.enforced,
+  calendarBuilders: CalendarBuilders(
+    rangeHighlightBuilder: (context, day, isWithinRange) {
+      if (!isWithinRange) return null;
+      
+      return Container(
+        margin: const EdgeInsets.all(4.0),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+      );
+    },
+    rangeStartBuilder: (context, day, focusedDay) {
+      return Container(
+        margin: const EdgeInsets.all(4.0),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          borderRadius: BorderRadius.horizontal(
+            left: Radius.circular(50.0),
+          ),
+        ),
+        child: Text(
+          '${day.day}',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    },
+    rangeEndBuilder: (context, day, focusedDay) {
+      return Container(
+        margin: const EdgeInsets.all(4.0),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          borderRadius: BorderRadius.horizontal(
+            right: Radius.circular(50.0),
+          ),
+        ),
+        child: Text(
+          '${day.day}',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    },
+  ),
+  // ... other properties
+);
+```
+
+### Custom Header Title
+
+```dart
+TableCalendar(
+  calendarBuilders: CalendarBuilders(
+    headerTitleBuilder: (context, day) {
+      return Container(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(
+          DateFormat.yMMMM().format(day),
+          style: TextStyle(
+            fontSize: 20.0,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+      );
+    },
+  ),
+  // ... other properties
+);
+```
+
+### Custom Week Numbers
+
+```dart
+TableCalendar(
+  calendarBuilders: CalendarBuilders(
+    weekNumberBuilder: (context, weekNumber) {
+      return Center(
+        child: Text(
+          'W$weekNumber',
+          style: TextStyle(
+            fontSize: 10.0,
+            color: Colors.grey,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    },
+  ),
+  // ... other properties
+);
+```
+
+## Builder Priority
+
+Builders are applied in the following priority order (highest to lowest):
+
+1. `prioritizedBuilder` - overrides all other builders
+2. `selectedBuilder` - for selected days
+3. `todayBuilder` - for today's date
+4. `rangeStartBuilder` / `rangeEndBuilder` - for range selection endpoints
+5. `withinRangeBuilder` - for days within range
+6. `holidayBuilder` - for holidays
+7. `outsideBuilder` - for days outside current month
+8. `disabledBuilder` - for disabled days
+9. `defaultBuilder` - for all other days
+10. Default styling from `CalendarStyle`
+
+<Note>
+  If a builder returns `null`, the calendar will fall back to the next applicable builder or the default styling from `CalendarStyle`.
+</Note>

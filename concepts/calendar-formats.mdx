@@ -1,0 +1,221 @@
+---
+title: Calendar Formats
+description: Learn how to switch between month, two weeks, and week views in TableCalendar
+---
+
+TableCalendar supports three distinct display formats that determine how many weeks are visible at once. You can switch between these formats dynamically or restrict which formats are available to users.
+
+## Available Formats
+
+The `CalendarFormat` enum defines three display modes:
+
+```dart
+enum CalendarFormat { month, twoWeeks, week }
+```
+
+<Info>
+The source code for `CalendarFormat` is located in `lib/src/shared/utils.dart:24`
+</Info>
+
+### Month Format
+
+Displays the full month view, showing all weeks that contain days from the current month. This is the default format.
+
+```dart
+TableCalendar(
+  firstDay: DateTime.utc(2010, 10, 16),
+  lastDay: DateTime.utc(2030, 3, 14),
+  focusedDay: DateTime.now(),
+  calendarFormat: CalendarFormat.month,
+);
+```
+
+### Two Weeks Format
+
+Shows a two-week view centered around the focused day, providing a middle ground between month and week views.
+
+```dart
+TableCalendar(
+  firstDay: DateTime.utc(2010, 10, 16),
+  lastDay: DateTime.utc(2030, 3, 14),
+  focusedDay: DateTime.now(),
+  calendarFormat: CalendarFormat.twoWeeks,
+);
+```
+
+### Week Format
+
+Displays only the week containing the focused day, ideal for compact layouts.
+
+```dart
+TableCalendar(
+  firstDay: DateTime.utc(2010, 10, 16),
+  lastDay: DateTime.utc(2030, 3, 14),
+  focusedDay: DateTime.now(),
+  calendarFormat: CalendarFormat.week,
+);
+```
+
+## Dynamic Format Switching
+
+To allow users to switch between formats, implement the `onFormatChanged` callback and manage the format in your state.
+
+<Steps>
+
+### Define state variable
+
+Store the current calendar format in your widget's state:
+
+```dart
+class _MyCalendarState extends State<MyCalendar> {
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  
+  // ...
+}
+```
+
+### Implement format change callback
+
+Provide both the current format and the callback to handle format changes:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  calendarFormat: _calendarFormat,
+  onFormatChanged: (format) {
+    if (_calendarFormat != format) {
+      setState(() {
+        _calendarFormat = format;
+      });
+    }
+  },
+);
+```
+
+<Info>
+This example is from `example/lib/pages/basics_example.dart:48-55`
+</Info>
+
+</Steps>
+
+## Restricting Available Formats
+
+Control which formats users can access using the `availableCalendarFormats` property. This is a map of formats to their display names.
+
+### Default Configuration
+
+By default, all three formats are available:
+
+```dart
+availableCalendarFormats: const {
+  CalendarFormat.month: 'Month',
+  CalendarFormat.twoWeeks: '2 weeks',
+  CalendarFormat.week: 'Week',
+}
+```
+
+### Limiting to Specific Formats
+
+Restrict to only month and week views:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  calendarFormat: _calendarFormat,
+  availableCalendarFormats: const {
+    CalendarFormat.month: 'Month',
+    CalendarFormat.week: 'Week',
+  },
+  onFormatChanged: (format) {
+    setState(() {
+      _calendarFormat = format;
+    });
+  },
+);
+```
+
+<Warning>
+The formats must be listed in descending order (from biggest to smallest) to ensure proper vertical swipe behavior. For example: `month`, `twoWeeks`, `week`.
+</Warning>
+
+## Vertical Swipe Gestures
+
+Users can swipe vertically to cycle through available formats. Swiping up transitions to a smaller format (e.g., month → week), while swiping down transitions to a larger format.
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  calendarFormat: _calendarFormat,
+  availableGestures: AvailableGestures.all, // Enables all gestures including vertical swipe
+  onFormatChanged: (format) {
+    setState(() {
+      _calendarFormat = format;
+    });
+  },
+);
+```
+
+<Info>
+The swipe behavior is implemented in `lib/src/table_calendar.dart:338-355`
+</Info>
+
+## Format Animation
+
+Customize the animation when switching between formats:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  calendarFormat: _calendarFormat,
+  formatAnimationDuration: const Duration(milliseconds: 200),
+  formatAnimationCurve: Curves.linear,
+  onFormatChanged: (format) {
+    setState(() {
+      _calendarFormat = format;
+    });
+  },
+);
+```
+
+## Disabling Format Changes
+
+To prevent format changes entirely, simply don't provide an `onFormatChanged` callback:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  calendarFormat: CalendarFormat.month, // Fixed format
+  // No onFormatChanged callback
+);
+```
+
+<Tip>
+When `onFormatChanged` is not provided, the format button in the header will have no effect, and vertical swipe gestures will be disabled.
+</Tip>
+
+## Six-Week Months
+
+By default, the month format displays only the weeks needed to show all days of the month. Enable `sixWeekMonthsEnforced` to always display six weeks:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  calendarFormat: CalendarFormat.month,
+  sixWeekMonthsEnforced: true, // Always show 6 weeks
+);
+```
+
+This ensures consistent calendar height across different months.

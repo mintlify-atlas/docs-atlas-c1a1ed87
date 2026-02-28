@@ -1,0 +1,229 @@
+---
+title: Basic Usage
+description: Learn how to implement a basic TableCalendar with day selection
+icon: calendar-days
+---
+
+This example demonstrates the fundamental features of TableCalendar including day selection, format switching, and page navigation.
+
+## What You'll Learn
+
+<CardGroup cols={2}>
+  <Card title="Day Selection" icon="hand-pointer">
+    Handle single day selection and track the selected date
+  </Card>
+  <Card title="Format Switching" icon="calendar">
+    Toggle between month, two-week, and week views
+  </Card>
+  <Card title="Page Navigation" icon="arrows-left-right">
+    Navigate between months and track the focused date
+  </Card>
+  <Card title="State Management" icon="database">
+    Manage calendar state with StatefulWidget
+  </Card>
+</CardGroup>
+
+## Implementation
+
+<Steps>
+  <Step title="Set up state variables">
+    Create a StatefulWidget and define the necessary state variables to track the calendar's current state.
+
+    ```dart
+    class _TableBasicsExampleState extends State<TableBasicsExample> {
+      CalendarFormat _calendarFormat = CalendarFormat.month;
+      DateTime _focusedDay = DateTime.now();
+      DateTime? _selectedDay;
+      // ...
+    }
+    ```
+
+    <Note>
+      - `_calendarFormat`: Controls whether the calendar displays as month, two-week, or week view
+      - `_focusedDay`: The day that the calendar is currently focused on (determines which month is shown)
+      - `_selectedDay`: The day that the user has selected (nullable since no day is selected initially)
+    </Note>
+  </Step>
+
+  <Step title="Configure TableCalendar">
+    Add the TableCalendar widget with required properties and callbacks.
+
+    ```dart
+    TableCalendar(
+      firstDay: kFirstDay,
+      lastDay: kLastDay,
+      focusedDay: _focusedDay,
+      calendarFormat: _calendarFormat,
+      selectedDayPredicate: (day) {
+        // Use `selectedDayPredicate` to determine which day is currently selected.
+        // If this returns true, then `day` will be marked as selected.
+
+        // Using `isSameDay` is recommended to disregard
+        // the time-part of compared DateTime objects.
+        return isSameDay(_selectedDay, day);
+      },
+      onDaySelected: (selectedDay, focusedDay) {
+        if (!isSameDay(_selectedDay, selectedDay)) {
+          // Call `setState()` when updating the selected day
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+        }
+      },
+      onFormatChanged: (format) {
+        if (_calendarFormat != format) {
+          // Call `setState()` when updating calendar format
+          setState(() {
+            _calendarFormat = format;
+          });
+        }
+      },
+      onPageChanged: (focusedDay) {
+        // No need to call `setState()` here
+        _focusedDay = focusedDay;
+      },
+    )
+    ```
+
+    <Tip>
+      The `selectedDayPredicate` uses `isSameDay` helper function to compare dates without considering the time component. This ensures proper date comparison.
+    </Tip>
+  </Step>
+
+  <Step title="Handle day selection">
+    The `onDaySelected` callback is triggered when a user taps on a day. Update both `_selectedDay` and `_focusedDay` to ensure proper calendar behavior.
+
+    ```dart
+    onDaySelected: (selectedDay, focusedDay) {
+      if (!isSameDay(_selectedDay, selectedDay)) {
+        setState(() {
+          _selectedDay = selectedDay;
+          _focusedDay = focusedDay;
+        });
+      }
+    },
+    ```
+
+    <Note>
+      We check if the selected day has changed before calling `setState()` to avoid unnecessary rebuilds.
+    </Note>
+  </Step>
+</Steps>
+
+## Complete Example
+
+<CodeGroup>
+```dart main.dart
+import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
+
+class TableBasicsExample extends StatefulWidget {
+  const TableBasicsExample({super.key});
+
+  @override
+  State<TableBasicsExample> createState() => _TableBasicsExampleState();
+}
+
+class _TableBasicsExampleState extends State<TableBasicsExample> {
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('TableCalendar - Basics'),
+      ),
+      body: TableCalendar(
+        firstDay: kFirstDay,
+        lastDay: kLastDay,
+        focusedDay: _focusedDay,
+        calendarFormat: _calendarFormat,
+        selectedDayPredicate: (day) {
+          // Use `selectedDayPredicate` to determine which day is currently selected.
+          // If this returns true, then `day` will be marked as selected.
+
+          // Using `isSameDay` is recommended to disregard
+          // the time-part of compared DateTime objects.
+          return isSameDay(_selectedDay, day);
+        },
+        onDaySelected: (selectedDay, focusedDay) {
+          if (!isSameDay(_selectedDay, selectedDay)) {
+            // Call `setState()` when updating the selected day
+            setState(() {
+              _selectedDay = selectedDay;
+              _focusedDay = focusedDay;
+            });
+          }
+        },
+        onFormatChanged: (format) {
+          if (_calendarFormat != format) {
+            // Call `setState()` when updating calendar format
+            setState(() {
+              _calendarFormat = format;
+            });
+          }
+        },
+        onPageChanged: (focusedDay) {
+          // No need to call `setState()` here
+          _focusedDay = focusedDay;
+        },
+      ),
+    );
+  }
+}
+```
+
+```dart utils.dart
+import 'package:table_calendar/table_calendar.dart';
+
+// Helper function to compare dates ignoring time
+bool isSameDay(DateTime? a, DateTime? b) {
+  if (a == null || b == null) {
+    return false;
+  }
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+// Define the range of dates the calendar can display
+final kToday = DateTime.now();
+final kFirstDay = DateTime(kToday.year, kToday.month - 3, kToday.day);
+final kLastDay = DateTime(kToday.year, kToday.month + 3, kToday.day);
+```
+</CodeGroup>
+
+## Key Concepts
+
+### Calendar Format
+
+TableCalendar supports three display formats:
+
+- **Month**: Shows the entire month (default)
+- **Two weeks**: Shows two weeks at a time
+- **Week**: Shows a single week
+
+Users can switch between formats using the format button in the calendar header.
+
+### Focused Day vs Selected Day
+
+- **Focused Day**: The day that determines which month/week is currently displayed. This changes when navigating between pages.
+- **Selected Day**: The day that the user has explicitly tapped on. This is highlighted in the calendar.
+
+### State Management
+
+<Tip>
+  Always call `setState()` when updating properties that affect the calendar's appearance (like `_selectedDay` or `_calendarFormat`). However, for `onPageChanged`, updating `_focusedDay` without `setState()` is sufficient since it doesn't require a rebuild.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Events" icon="calendar-check" href="/examples/events">
+    Learn how to display events on calendar days
+  </Card>
+  <Card title="Range Selection" icon="calendar-range" href="/examples/range-selection">
+    Implement date range selection
+  </Card>
+</CardGroup>

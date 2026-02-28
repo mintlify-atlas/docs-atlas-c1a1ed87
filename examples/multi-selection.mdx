@@ -1,0 +1,406 @@
+---
+title: Multi Selection
+description: Enable users to select multiple non-consecutive days
+icon: calendar-days
+---
+
+This example demonstrates how to allow users to select multiple days that don't need to be consecutive, perfect for booking systems or task scheduling.
+
+## What You'll Learn
+
+<CardGroup cols={2}>
+  <Card title="Multiple Selection" icon="hand-pointer">
+    Allow selection of multiple non-consecutive days
+  </Card>
+  <Card title="LinkedHashSet" icon="hashtag">
+    Use efficient data structures for date comparison
+  </Card>
+  <Card title="Toggle Selection" icon="toggle-on">
+    Add and remove days from selection
+  </Card>
+  <Card title="Clear Selection" icon="xmark">
+    Provide UI to clear all selected days
+  </Card>
+</CardGroup>
+
+## Implementation
+
+<Steps>
+  <Step title="Set up state with LinkedHashSet">
+    Use a `LinkedHashSet` with custom equality functions to store selected days.
+
+    ```dart
+    import 'dart:collection';
+
+    class _TableMultiExampleState extends State<TableMultiExample> {
+      final ValueNotifier<List<Event>> _selectedEvents = ValueNotifier([]);
+      
+      // Using a `LinkedHashSet` is recommended due to equality comparison override
+      final Set<DateTime> _selectedDays = LinkedHashSet<DateTime>(
+        equals: isSameDay,
+        hashCode: getHashCode,
+      );
+
+      CalendarFormat _calendarFormat = CalendarFormat.month;
+      DateTime _focusedDay = DateTime.now();
+
+      @override
+      void dispose() {
+        _selectedEvents.dispose();
+        super.dispose();
+      }
+    }
+    ```
+
+    <Note>
+      `LinkedHashSet` maintains insertion order while providing O(1) lookups. The custom `equals` and `hashCode` functions ensure dates are compared correctly without considering time.
+    </Note>
+  </Step>
+
+  <Step title="Configure TableCalendar for multi-selection">
+    Use `selectedDayPredicate` to check if a day is in the selected set.
+
+    ```dart
+    TableCalendar<Event>(
+      firstDay: kFirstDay,
+      lastDay: kLastDay,
+      focusedDay: _focusedDay,
+      calendarFormat: _calendarFormat,
+      eventLoader: _getEventsForDay,
+      startingDayOfWeek: StartingDayOfWeek.monday,
+      selectedDayPredicate: (day) {
+        // Use values from Set to mark multiple days as selected
+        return _selectedDays.contains(day);
+      },
+      onDaySelected: _onDaySelected,
+      onFormatChanged: (format) {
+        if (_calendarFormat != format) {
+          setState(() {
+            _calendarFormat = format;
+          });
+        }
+      },
+      onPageChanged: (focusedDay) {
+        _focusedDay = focusedDay;
+      },
+    )
+    ```
+  </Step>
+
+  <Step title="Handle day selection with toggle logic">
+    When a day is tapped, add it to the set if not present, or remove it if already selected.
+
+    ```dart
+    void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+      setState(() {
+        _focusedDay = focusedDay;
+        // Update values in a Set
+        if (_selectedDays.contains(selectedDay)) {
+          _selectedDays.remove(selectedDay);
+        } else {
+          _selectedDays.add(selectedDay);
+        }
+      });
+
+      _selectedEvents.value = _getEventsForDays(_selectedDays);
+    }
+    ```
+
+    <Tip>
+      This toggle behavior allows users to tap a day to select it, then tap again to deselect it.
+    </Tip>
+  </Step>
+
+  <Step title="Aggregate events from all selected days">
+    Create a helper function to gather events from multiple days.
+
+    ```dart
+    List<Event> _getEventsForDay(DateTime day) {
+      return kEvents[day] ?? [];
+    }
+
+    List<Event> _getEventsForDays(Set<DateTime> days) {
+      // Note that days are in selection order (same applies to events)
+      return [
+        for (final d in days) ..._getEventsForDay(d),
+      ];
+    }
+    ```
+  </Step>
+
+  <Step title="Add a clear selection button">
+    Provide a way for users to clear all selections at once.
+
+    ```dart
+    ElevatedButton(
+      child: const Text('Clear selection'),
+      onPressed: () {
+        setState(() {
+          _selectedDays.clear();
+          _selectedEvents.value = [];
+        });
+      },
+    )
+    ```
+  </Step>
+</Steps>
+
+## Complete Example
+
+<CodeGroup>
+```dart main.dart
+import 'dart:collection';
+import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
+
+class TableMultiExample extends StatefulWidget {
+  const TableMultiExample({super.key});
+
+  @override
+  State<TableMultiExample> createState() => _TableMultiExampleState();
+}
+
+class _TableMultiExampleState extends State<TableMultiExample> {
+  final ValueNotifier<List<Event>> _selectedEvents = ValueNotifier([]);
+
+  // Using a `LinkedHashSet` is recommended due to equality comparison override
+  final Set<DateTime> _selectedDays = LinkedHashSet<DateTime>(
+    equals: isSameDay,
+    hashCode: getHashCode,
+  );
+
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+
+  @override
+  void dispose() {
+    _selectedEvents.dispose();
+    super.dispose();
+  }
+
+  List<Event> _getEventsForDay(DateTime day) {
+    return kEvents[day] ?? [];
+  }
+
+  List<Event> _getEventsForDays(Set<DateTime> days) {
+    // Note that days are in selection order (same applies to events)
+    return [
+      for (final d in days) ..._getEventsForDay(d),
+    ];
+  }
+
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    setState(() {
+      _focusedDay = focusedDay;
+      // Update values in a Set
+      if (_selectedDays.contains(selectedDay)) {
+        _selectedDays.remove(selectedDay);
+      } else {
+        _selectedDays.add(selectedDay);
+      }
+    });
+
+    _selectedEvents.value = _getEventsForDays(_selectedDays);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('TableCalendar - Multi'),
+      ),
+      body: Column(
+        children: [
+          TableCalendar<Event>(
+            firstDay: kFirstDay,
+            lastDay: kLastDay,
+            focusedDay: _focusedDay,
+            calendarFormat: _calendarFormat,
+            eventLoader: _getEventsForDay,
+            startingDayOfWeek: StartingDayOfWeek.monday,
+            selectedDayPredicate: (day) {
+              // Use values from Set to mark multiple days as selected
+              return _selectedDays.contains(day);
+            },
+            onDaySelected: _onDaySelected,
+            onFormatChanged: (format) {
+              if (_calendarFormat != format) {
+                setState(() {
+                  _calendarFormat = format;
+                });
+              }
+            },
+            onPageChanged: (focusedDay) {
+              _focusedDay = focusedDay;
+            },
+          ),
+          ElevatedButton(
+            child: const Text('Clear selection'),
+            onPressed: () {
+              setState(() {
+                _selectedDays.clear();
+                _selectedEvents.value = [];
+              });
+            },
+          ),
+          const SizedBox(height: 8.0),
+          Expanded(
+            child: ValueListenableBuilder<List<Event>>(
+              valueListenable: _selectedEvents,
+              builder: (context, value, _) {
+                return ListView.builder(
+                  itemCount: value.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12.0,
+                        vertical: 4.0,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: ListTile(
+                        onTap: () => print('${value[index]}'),
+                        title: Text('${value[index]}'),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+```dart utils.dart
+import 'package:table_calendar/table_calendar.dart';
+
+bool isSameDay(DateTime? a, DateTime? b) {
+  if (a == null || b == null) {
+    return false;
+  }
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+int getHashCode(DateTime key) {
+  return key.day * 1000000 + key.month * 10000 + key.year;
+}
+```
+</CodeGroup>
+
+## Key Concepts
+
+### Why LinkedHashSet?
+
+`LinkedHashSet` is ideal for multi-selection because:
+
+1. **O(1) lookups**: Checking if a day is selected is very fast
+2. **Maintains order**: Days appear in the order they were selected
+3. **Custom equality**: We can compare dates ignoring the time component
+4. **No duplicates**: Each day can only be selected once
+
+```dart
+final Set<DateTime> _selectedDays = LinkedHashSet<DateTime>(
+  equals: isSameDay,
+  hashCode: getHashCode,
+);
+```
+
+### Toggle Selection Pattern
+
+The toggle pattern makes it intuitive to select and deselect days:
+
+```dart
+if (_selectedDays.contains(selectedDay)) {
+  _selectedDays.remove(selectedDay);  // Deselect if already selected
+} else {
+  _selectedDays.add(selectedDay);      // Select if not selected
+}
+```
+
+### Aggregating Events
+
+When multiple days are selected, you typically want to show all events from those days:
+
+```dart
+List<Event> _getEventsForDays(Set<DateTime> days) {
+  return [
+    for (final d in days) ..._getEventsForDay(d),
+  ];
+}
+```
+
+<Note>
+  The spread operator `...` flattens the list of lists into a single list of events.
+</Note>
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Booking Systems" icon="bed">
+    Select multiple check-in dates across different periods
+  </Card>
+  <Card title="Task Scheduling" icon="list-check">
+    Choose specific days for recurring tasks
+  </Card>
+  <Card title="Event Planning" icon="calendar-plus">
+    Select multiple dates for availability or proposals
+  </Card>
+  <Card title="Shift Selection" icon="clock">
+    Pick non-consecutive work days
+  </Card>
+</CardGroup>
+
+## Combining with Other Features
+
+You can combine multi-selection with other TableCalendar features:
+
+### With Events
+
+Show events from all selected days in an aggregated list (as shown in the example).
+
+### With Disabled Days
+
+Prevent certain days from being selected:
+
+```dart
+TableCalendar(
+  // ... other properties
+  enabledDayPredicate: (day) {
+    // Disable weekends
+    return day.weekday != DateTime.saturday && day.weekday != DateTime.sunday;
+  },
+)
+```
+
+### With Custom Styling
+
+Style selected days differently:
+
+```dart
+TableCalendar(
+  // ... other properties
+  calendarStyle: CalendarStyle(
+    selectedDecoration: BoxDecoration(
+      color: Colors.blue,
+      shape: BoxShape.circle,
+    ),
+  ),
+)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Advanced" icon="wand-magic-sparkles" href="/examples/advanced">
+    Explore advanced features and customizations
+  </Card>
+  <Card title="Styling" icon="palette" href="/customization/styling">
+    Learn how to style your calendar
+  </Card>
+</CardGroup>

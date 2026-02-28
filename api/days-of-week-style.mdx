@@ -1,0 +1,250 @@
+---
+title: DaysOfWeekStyle
+description: Styling for TableCalendar's days of week panel
+---
+
+Class containing styling for `TableCalendar`'s days of week panel (the row showing Mon, Tue, Wed, etc.).
+
+## Constructor
+
+```dart
+const DaysOfWeekStyle({
+  TextFormatter? dowTextFormatter,
+  Decoration decoration = const BoxDecoration(),
+  TextStyle weekdayStyle = const TextStyle(color: Color(0xFF4F4F4F)),
+  TextStyle weekendStyle = const TextStyle(color: Color(0xFF6A6A6A)),
+});
+```
+
+## Properties
+
+<ParamField path="dowTextFormatter" type="TextFormatter?" default="null">
+  Use to customize days of week panel text (e.g. with different `DateFormat`).
+  You can use `String` transformations to further customize the text.
+  Defaults to simple `'E'` format (i.e. Mon, Tue, Wed, etc.).
+  
+  Example usage:
+  ```dart
+  dowTextFormatter: (date, locale) => DateFormat.E(locale).format(date)[0],
+  ```
+</ParamField>
+
+<ParamField path="decoration" type="Decoration" default="BoxDecoration()">
+  Decoration for the top row of the table.
+</ParamField>
+
+<ParamField path="weekdayStyle" type="TextStyle" default="TextStyle(color: Color(0xFF4F4F4F))">
+  Style for weekdays on the top of calendar.
+</ParamField>
+
+<ParamField path="weekendStyle" type="TextStyle" default="TextStyle(color: Color(0xFF6A6A6A))">
+  Style for weekend days on the top of calendar.
+</ParamField>
+
+## Example Usage
+
+### Basic Styling
+
+```dart
+TableCalendar(
+  daysOfWeekStyle: DaysOfWeekStyle(
+    weekdayStyle: TextStyle(
+      color: Colors.black,
+      fontWeight: FontWeight.bold,
+    ),
+    weekendStyle: TextStyle(
+      color: Colors.red,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+  // ... other properties
+);
+```
+
+### Custom Format - Single Letter
+
+```dart
+TableCalendar(
+  daysOfWeekStyle: DaysOfWeekStyle(
+    // Show only first letter (M, T, W, etc.)
+    dowTextFormatter: (date, locale) {
+      return DateFormat.E(locale).format(date)[0];
+    },
+    weekdayStyle: TextStyle(
+      fontSize: 14.0,
+      fontWeight: FontWeight.w600,
+      color: Colors.grey[800],
+    ),
+    weekendStyle: TextStyle(
+      fontSize: 14.0,
+      fontWeight: FontWeight.w600,
+      color: Colors.blue,
+    ),
+  ),
+  // ... other properties
+);
+```
+
+### Custom Format - Full Names
+
+```dart
+TableCalendar(
+  daysOfWeekStyle: DaysOfWeekStyle(
+    // Show full day names (Monday, Tuesday, etc.)
+    dowTextFormatter: (date, locale) {
+      return DateFormat.EEEE(locale).format(date);
+    },
+    weekdayStyle: TextStyle(
+      fontSize: 12.0,
+      color: Colors.black87,
+    ),
+    weekendStyle: TextStyle(
+      fontSize: 12.0,
+      color: Colors.red[700],
+    ),
+  ),
+  // ... other properties
+);
+```
+
+### With Background Decoration
+
+```dart
+TableCalendar(
+  daysOfWeekStyle: DaysOfWeekStyle(
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      border: Border(
+        bottom: BorderSide(
+          color: Colors.grey[400]!,
+          width: 1.0,
+        ),
+      ),
+    ),
+    weekdayStyle: TextStyle(
+      fontSize: 14.0,
+      fontWeight: FontWeight.bold,
+      color: Colors.black,
+    ),
+    weekendStyle: TextStyle(
+      fontSize: 14.0,
+      fontWeight: FontWeight.bold,
+      color: Colors.red,
+    ),
+  ),
+  // ... other properties
+);
+```
+
+### Uppercase Styling
+
+```dart
+TableCalendar(
+  daysOfWeekStyle: DaysOfWeekStyle(
+    dowTextFormatter: (date, locale) {
+      // Convert to uppercase
+      return DateFormat.E(locale).format(date).toUpperCase();
+    },
+    weekdayStyle: TextStyle(
+      fontSize: 12.0,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 1.2,
+      color: Colors.grey[700],
+    ),
+    weekendStyle: TextStyle(
+      fontSize: 12.0,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 1.2,
+      color: Colors.blue[700],
+    ),
+  ),
+  // ... other properties
+);
+```
+
+### Minimal Style
+
+```dart
+TableCalendar(
+  daysOfWeekStyle: DaysOfWeekStyle(
+    dowTextFormatter: (date, locale) {
+      return DateFormat.E(locale).format(date)[0];
+    },
+    weekdayStyle: TextStyle(
+      fontSize: 11.0,
+      color: Colors.grey[600],
+    ),
+    weekendStyle: TextStyle(
+      fontSize: 11.0,
+      color: Colors.grey[600],
+    ),
+    decoration: BoxDecoration(
+      border: Border(
+        bottom: BorderSide(
+          color: Colors.grey[300]!,
+          width: 0.5,
+        ),
+      ),
+    ),
+  ),
+  // ... other properties
+);
+```
+
+### Localized Days
+
+```dart
+import 'package:intl/intl.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+// In MaterialApp
+MaterialApp(
+  localizationsDelegates: [
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ],
+  supportedLocales: [
+    const Locale('en'),
+    const Locale('es'),
+    const Locale('fr'),
+  ],
+  // ...
+)
+
+// In TableCalendar
+TableCalendar(
+  locale: 'es',  // Spanish locale
+  daysOfWeekStyle: DaysOfWeekStyle(
+    // Will automatically show Spanish day names (lun, mar, mié, etc.)
+    weekdayStyle: TextStyle(
+      fontSize: 14.0,
+      color: Colors.black,
+    ),
+    weekendStyle: TextStyle(
+      fontSize: 14.0,
+      color: Colors.red,
+    ),
+  ),
+  // ... other properties
+);
+```
+
+## Tips
+
+<Note>
+  The `dowTextFormatter` uses the `intl` package's `DateFormat` class. Make sure to add `intl` to your `pubspec.yaml` dependencies for date formatting.
+</Note>
+
+<Note>
+  Weekend days are determined by the `weekendDays` parameter in `TableCalendar`, which defaults to `[DateTime.saturday, DateTime.sunday]`. The `weekendStyle` will be applied to days matching this list.
+</Note>
+
+<Note>
+  For single-letter abbreviations, accessing `[0]` on the formatted string works well for English, but may need adjustment for other languages where day names might have diacritics or different character structures.
+</Note>
+
+## Related
+
+- [CalendarStyle](/api/calendar-style) - For styling the calendar day cells
+- [HeaderStyle](/api/header-style) - For styling the calendar header
+- [CalendarBuilders](/api/calendar-builders) - For custom day of week builders using `dowBuilder`

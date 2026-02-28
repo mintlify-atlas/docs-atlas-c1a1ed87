@@ -1,0 +1,352 @@
+---
+title: CalendarStyle
+description: Styling and configuration for TableCalendar's content
+---
+
+Class containing styling and configuration for `TableCalendar`'s content, including day cells, event markers, and range selection styling.
+
+## Constructor
+
+```dart
+const CalendarStyle({
+  bool isTodayHighlighted = true,
+  bool canMarkersOverflow = true,
+  bool outsideDaysVisible = true,
+  bool markersAutoAligned = true,
+  double? markerSize,
+  double markerSizeScale = 0.2,
+  double markersAnchor = 0.7,
+  double rangeHighlightScale = 1.0,
+  EdgeInsets markerMargin = const EdgeInsets.symmetric(horizontal: 0.3),
+  AlignmentGeometry markersAlignment = Alignment.bottomCenter,
+  int markersMaxCount = 4,
+  EdgeInsets cellMargin = const EdgeInsets.all(6.0),
+  EdgeInsets cellPadding = EdgeInsets.zero,
+  AlignmentGeometry cellAlignment = Alignment.center,
+  PositionedOffset markersOffset = const PositionedOffset(),
+  Color rangeHighlightColor = const Color(0xFFBBDDFF),
+  Decoration markerDecoration = const BoxDecoration(...),
+  TextStyle todayTextStyle = const TextStyle(...),
+  Decoration todayDecoration = const BoxDecoration(...),
+  TextStyle selectedTextStyle = const TextStyle(...),
+  Decoration selectedDecoration = const BoxDecoration(...),
+  TextStyle rangeStartTextStyle = const TextStyle(...),
+  Decoration rangeStartDecoration = const BoxDecoration(...),
+  TextStyle rangeEndTextStyle = const TextStyle(...),
+  Decoration rangeEndDecoration = const BoxDecoration(...),
+  TextStyle withinRangeTextStyle = const TextStyle(),
+  Decoration withinRangeDecoration = const BoxDecoration(...),
+  TextStyle outsideTextStyle = const TextStyle(...),
+  Decoration outsideDecoration = const BoxDecoration(...),
+  TextStyle disabledTextStyle = const TextStyle(...),
+  Decoration disabledDecoration = const BoxDecoration(...),
+  TextStyle holidayTextStyle = const TextStyle(...),
+  Decoration holidayDecoration = const BoxDecoration(...),
+  TextStyle weekendTextStyle = const TextStyle(...),
+  Decoration weekendDecoration = const BoxDecoration(...),
+  TextStyle weekNumberTextStyle = const TextStyle(...),
+  TextStyle defaultTextStyle = const TextStyle(),
+  Decoration defaultDecoration = const BoxDecoration(...),
+  Decoration rowDecoration = const BoxDecoration(),
+  TableBorder tableBorder = const TableBorder(),
+  EdgeInsets tablePadding = EdgeInsets.zero,
+  TextFormatter? dayTextFormatter,
+});
+```
+
+## Properties
+
+### Event Markers
+
+<ParamField path="markersMaxCount" type="int" default="4">
+  Maximum amount of single event marker dots to be displayed.
+</ParamField>
+
+<ParamField path="canMarkersOverflow" type="bool" default="true">
+  Specifies if event markers rendered for a day cell can overflow cell's boundaries.
+  - `true` - Event markers will be drawn over the cell boundaries
+  - `false` - Event markers will be clipped if they are too big
+</ParamField>
+
+<ParamField path="markersAutoAligned" type="bool" default="true">
+  Determines if single event marker dots should be aligned automatically with `markersAnchor`.
+  If `false`, `markersOffset` will be used instead.
+</ParamField>
+
+<ParamField path="markersAnchor" type="double" default="0.7">
+  Specifies the anchor point of single event markers if `markersAutoAligned` is `true`.
+  A value of `0.5` will center the markers at the bottom edge of day cell's decoration.
+  
+  Includes `cellMargin` for calculations.
+</ParamField>
+
+<ParamField path="markerSize" type="double?" default="null">
+  The size of single event marker dot.
+  
+  By default `markerSizeScale` is used. To use `markerSize` instead, simply provide a non-null value.
+</ParamField>
+
+<ParamField path="markerSizeScale" type="double" default="0.2">
+  Proportion of single event marker dot size in relation to day cell size.
+  
+  Includes `cellMargin` for calculations.
+</ParamField>
+
+<ParamField path="markersOffset" type="PositionedOffset" default="PositionedOffset()">
+  `PositionedOffset` for event markers. Allows to specify `top`, `bottom`, `start` and `end`.
+</ParamField>
+
+<ParamField path="markersAlignment" type="AlignmentGeometry" default="Alignment.bottomCenter">
+  General `Alignment` for event markers.
+  Will have no effect on markers if `markersAutoAligned` or `markersOffset` is used.
+</ParamField>
+
+<ParamField path="markerDecoration" type="Decoration" default="BoxDecoration(color: Color(0xFF263238), shape: BoxShape.circle)">
+  Decoration of single event markers. Affects each marker dot.
+</ParamField>
+
+<ParamField path="markerMargin" type="EdgeInsets" default="EdgeInsets.symmetric(horizontal: 0.3)">
+  Margin of single event markers. Affects each marker dot.
+</ParamField>
+
+### Day Cell Layout
+
+<ParamField path="cellMargin" type="EdgeInsets" default="EdgeInsets.all(6.0)">
+  Margin of each individual day cell.
+</ParamField>
+
+<ParamField path="cellPadding" type="EdgeInsets" default="EdgeInsets.zero">
+  Padding of each individual day cell.
+</ParamField>
+
+<ParamField path="cellAlignment" type="AlignmentGeometry" default="Alignment.center">
+  Alignment of each individual day cell.
+</ParamField>
+
+### Range Selection
+
+<ParamField path="rangeHighlightScale" type="double" default="1.0">
+  Proportion of range selection highlight size in relation to day cell size.
+  
+  Includes `cellMargin` for calculations.
+</ParamField>
+
+<ParamField path="rangeHighlightColor" type="Color" default="Color(0xFFBBDDFF)">
+  Color of range selection highlight.
+</ParamField>
+
+### Today Styling
+
+<ParamField path="isTodayHighlighted" type="bool" default="true">
+  Determines if a day cell that matches the current day should be highlighted.
+</ParamField>
+
+<ParamField path="todayTextStyle" type="TextStyle" default="TextStyle(color: Color(0xFFFAFAFA), fontSize: 16.0)">
+  TextStyle for a day cell that matches the current day.
+</ParamField>
+
+<ParamField path="todayDecoration" type="Decoration" default="BoxDecoration(color: Color(0xFF9FA8DA), shape: BoxShape.circle)">
+  Decoration for a day cell that matches the current day.
+</ParamField>
+
+### Selected Day Styling
+
+<ParamField path="selectedTextStyle" type="TextStyle" default="TextStyle(color: Color(0xFFFAFAFA), fontSize: 16.0)">
+  TextStyle for day cells that are currently marked as selected by `selectedDayPredicate`.
+</ParamField>
+
+<ParamField path="selectedDecoration" type="Decoration" default="BoxDecoration(color: Color(0xFF5C6BC0), shape: BoxShape.circle)">
+  Decoration for day cells that are currently marked as selected by `selectedDayPredicate`.
+</ParamField>
+
+### Range Start Styling
+
+<ParamField path="rangeStartTextStyle" type="TextStyle" default="TextStyle(color: Color(0xFFFAFAFA), fontSize: 16.0)">
+  TextStyle for a day cell that is the start of current range selection.
+</ParamField>
+
+<ParamField path="rangeStartDecoration" type="Decoration" default="BoxDecoration(color: Color(0xFF6699FF), shape: BoxShape.circle)">
+  Decoration for a day cell that is the start of current range selection.
+</ParamField>
+
+### Range End Styling
+
+<ParamField path="rangeEndTextStyle" type="TextStyle" default="TextStyle(color: Color(0xFFFAFAFA), fontSize: 16.0)">
+  TextStyle for a day cell that is the end of current range selection.
+</ParamField>
+
+<ParamField path="rangeEndDecoration" type="Decoration" default="BoxDecoration(color: Color(0xFF6699FF), shape: BoxShape.circle)">
+  Decoration for a day cell that is the end of current range selection.
+</ParamField>
+
+### Within Range Styling
+
+<ParamField path="withinRangeTextStyle" type="TextStyle" default="TextStyle()">
+  TextStyle for day cells that fall within the currently selected range.
+</ParamField>
+
+<ParamField path="withinRangeDecoration" type="Decoration" default="BoxDecoration(shape: BoxShape.circle)">
+  Decoration for day cells that fall within the currently selected range.
+</ParamField>
+
+### Outside Days Styling
+
+<ParamField path="outsideDaysVisible" type="bool" default="true">
+  Determines if day cells that do not match the currently focused month should be visible.
+  
+  Affects only `CalendarFormat.month`.
+</ParamField>
+
+<ParamField path="outsideTextStyle" type="TextStyle" default="TextStyle(color: Color(0xFFAEAEAE))">
+  TextStyle for day cells, of which the `day.month` is different than `focusedDay.month`.
+  This will affect day cells that do not match the currently focused month.
+</ParamField>
+
+<ParamField path="outsideDecoration" type="Decoration" default="BoxDecoration(shape: BoxShape.circle)">
+  Decoration for day cells, of which the `day.month` is different than `focusedDay.month`.
+  This will affect day cells that do not match the currently focused month.
+</ParamField>
+
+### Disabled Days Styling
+
+<ParamField path="disabledTextStyle" type="TextStyle" default="TextStyle(color: Color(0xFFBFBFBF))">
+  TextStyle for day cells that have been disabled.
+  
+  This refers to dates disabled by returning false in `enabledDayPredicate`,
+  as well as dates that are outside of the bounds set up by `firstDay` and `lastDay`.
+</ParamField>
+
+<ParamField path="disabledDecoration" type="Decoration" default="BoxDecoration(shape: BoxShape.circle)">
+  Decoration for day cells that have been disabled.
+  
+  This refers to dates disabled by returning false in `enabledDayPredicate`,
+  as well as dates that are outside of the bounds set up by `firstDay` and `lastDay`.
+</ParamField>
+
+### Holiday Styling
+
+<ParamField path="holidayTextStyle" type="TextStyle" default="TextStyle(color: Color(0xFF5C6BC0))">
+  TextStyle for day cells that are marked as holidays by `holidayPredicate`.
+</ParamField>
+
+<ParamField path="holidayDecoration" type="Decoration" default="BoxDecoration with border">
+  Decoration for day cells that are marked as holidays by `holidayPredicate`.
+  
+  Default includes a circular border with color `Color(0xFF9FA8DA)` and width `1.4`.
+</ParamField>
+
+### Weekend Styling
+
+<ParamField path="weekendTextStyle" type="TextStyle" default="TextStyle(color: Color(0xFF5A5A5A))">
+  TextStyle for day cells that match `weekendDay` list.
+</ParamField>
+
+<ParamField path="weekendDecoration" type="Decoration" default="BoxDecoration(shape: BoxShape.circle)">
+  Decoration for day cells that match `weekendDay` list.
+</ParamField>
+
+### Week Number Styling
+
+<ParamField path="weekNumberTextStyle" type="TextStyle" default="TextStyle(fontSize: 12, color: Color(0xFFBFBFBF))">
+  TextStyle for week number.
+</ParamField>
+
+### Default Styling
+
+<ParamField path="defaultTextStyle" type="TextStyle" default="TextStyle()">
+  TextStyle for day cells that do not match any other styles.
+</ParamField>
+
+<ParamField path="defaultDecoration" type="Decoration" default="BoxDecoration(shape: BoxShape.circle)">
+  Decoration for day cells that do not match any other styles.
+</ParamField>
+
+### Table Styling
+
+<ParamField path="rowDecoration" type="Decoration" default="BoxDecoration()">
+  Decoration for each interior row of day cells.
+</ParamField>
+
+<ParamField path="tableBorder" type="TableBorder" default="TableBorder()">
+  Border for the internal `Table` widget.
+</ParamField>
+
+<ParamField path="tablePadding" type="EdgeInsets" default="EdgeInsets.zero">
+  Padding for the internal `Table` widget.
+</ParamField>
+
+### Custom Formatters
+
+<ParamField path="dayTextFormatter" type="TextFormatter?" default="null">
+  Use to customize the text within each day cell.
+  Defaults to `'${date.day}'`, to show just the day number.
+  
+  Example usage:
+  ```dart
+  dayTextFormatter: (date, locale) => DateFormat.d(locale).format(date),
+  ```
+</ParamField>
+
+## Helper Classes
+
+### PositionedOffset
+
+Helper class containing data for internal `Positioned` widget.
+
+```dart
+const PositionedOffset({
+  double? top,
+  double? bottom,
+  double? start,
+  double? end,
+});
+```
+
+<ParamField path="top" type="double?" default="null">
+  Distance from the top edge.
+</ParamField>
+
+<ParamField path="bottom" type="double?" default="null">
+  Distance from the bottom edge.
+</ParamField>
+
+<ParamField path="start" type="double?" default="null">
+  Distance from the leading edge.
+</ParamField>
+
+<ParamField path="end" type="double?" default="null">
+  Distance from the trailing edge.
+</ParamField>
+
+## Example Usage
+
+```dart
+TableCalendar(
+  calendarStyle: CalendarStyle(
+    // Customize today's appearance
+    isTodayHighlighted: true,
+    todayDecoration: BoxDecoration(
+      color: Colors.blue,
+      shape: BoxShape.circle,
+    ),
+    todayTextStyle: TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+    ),
+    // Customize selected day
+    selectedDecoration: BoxDecoration(
+      color: Colors.deepPurple,
+      shape: BoxShape.circle,
+    ),
+    // Customize event markers
+    markerDecoration: BoxDecoration(
+      color: Colors.red,
+      shape: BoxShape.circle,
+    ),
+    markersMaxCount: 3,
+    // Customize outside days
+    outsideDaysVisible: false,
+  ),
+  // ... other properties
+);
+```

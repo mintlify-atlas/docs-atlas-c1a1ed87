@@ -1,0 +1,546 @@
+---
+title: Events and Holidays
+description: Display events and mark holidays in your calendar with custom markers
+---
+
+TableCalendar provides powerful APIs for loading and displaying events, as well as marking special days like holidays. Events are rendered as markers below the day number, while holidays can be styled differently.
+
+## Event Loading
+
+Events are loaded on-demand using the `eventLoader` function, which is called for each visible day in the calendar.
+
+### Event Loader Signature
+
+The event loader is a function that takes a `DateTime` and returns a list of events:
+
+```dart
+// From lib/src/table_calendar.dart:174
+final List<T> Function(DateTime day)? eventLoader;
+```
+
+<Info>
+The generic type `<T>` allows you to use any custom event class. TableCalendar doesn't impose any structure on your event objects.
+</Info>
+
+## Basic Event Setup
+
+<Steps>
+
+### Define an event class
+
+Create a simple event model for your application:
+
+```dart
+// From example/lib/utils.dart:8-16
+class Event {
+  final String title;
+  
+  const Event(this.title);
+  
+  @override
+  String toString() => title;
+}
+```
+
+### Create event data source
+
+Store events in a data structure. A `LinkedHashMap` with custom equality is recommended:
+
+```dart
+// From example/lib/utils.dart:21-24
+final kEvents = LinkedHashMap<DateTime, List<Event>>(
+  equals: isSameDay,
+  hashCode: getHashCode,
+)..addAll(_kEventSource);
+```
+
+<Note>
+Using `LinkedHashMap` with `equals: isSameDay` ensures that DateTime objects are compared by date only, not by time.
+</Note>
+
+### Implement event loader function
+
+Create a function to retrieve events for a specific day:
+
+```dart
+// From example/lib/pages/events_example.dart:41-44
+List<Event> _getEventsForDay(DateTime day) {
+  // Implementation example
+  return kEvents[day] ?? [];
+}
+```
+
+### Attach event loader to calendar
+
+Provide the event loader function to TableCalendar:
+
+```dart
+TableCalendar<Event>(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  eventLoader: _getEventsForDay,
+);
+```
+
+<Info>
+This example is from `example/lib/pages/events_example.dart:105`
+</Info>
+
+</Steps>
+
+## Custom Event Types
+
+You can use any class as an event. Here are some examples:
+
+<Tabs>
+  <Tab title="Simple String">
+    ```dart
+    TableCalendar<String>(
+      eventLoader: (day) {
+        if (day.weekday == DateTime.monday) {
+          return ['Team Meeting'];
+        }
+        return [];
+      },
+    );
+    ```
+  </Tab>
+  
+  <Tab title="Custom Class">
+    ```dart
+    class Appointment {
+      final String title;
+      final DateTime startTime;
+      final DateTime endTime;
+      final Color color;
+      
+      Appointment({
+        required this.title,
+        required this.startTime,
+        required this.endTime,
+        required this.color,
+      });
+    }
+    
+    TableCalendar<Appointment>(
+      eventLoader: (day) {
+        return appointments.where((apt) => 
+          isSameDay(apt.startTime, day)
+        ).toList();
+      },
+    );
+    ```
+  </Tab>
+  
+  <Tab title="Map">
+    ```dart
+    TableCalendar<Map<String, dynamic>>(
+      eventLoader: (day) {
+        return [
+          {
+            'title': 'Event 1',
+            'type': 'meeting',
+            'duration': 60,
+          },
+        ];
+      },
+    );
+    ```
+  </Tab>
+</Tabs>
+
+## Cyclic Events
+
+Use the event loader to create events that repeat on a pattern:
+
+### Weekly Events
+
+```dart
+// From README.md:138-145
+eventLoader: (day) {
+  if (day.weekday == DateTime.monday) {
+    return [Event('Cyclic event')];
+  }
+  
+  return [];
+},
+```
+
+### Monthly Events
+
+```dart
+eventLoader: (day) {
+  // Event on the 15th of every month
+  if (day.day == 15) {
+    return [Event('Monthly meeting')];
+  }
+  
+  return [];
+},
+```
+
+### Custom Patterns
+
+```dart
+eventLoader: (day) {
+  final events = <Event>[];
+  
+  // Every Monday
+  if (day.weekday == DateTime.monday) {
+    events.add(Event('Team Standup'));
+  }
+  
+  // First day of the month
+  if (day.day == 1) {
+    events.add(Event('Monthly Review'));
+  }
+  
+  // Every other Friday
+  if (day.weekday == DateTime.friday && (day.day ~/ 7) % 2 == 0) {
+    events.add(Event('Bi-weekly Sprint'));
+  }
+  
+  return events;
+},
+```
+
+## Events with Selection
+
+Update displayed events when a day is selected:
+
+```dart
+class _MyCalendarState extends State<MyCalendar> {
+  late final ValueNotifier<List<Event>> _selectedEvents;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = _focusedDay;
+    _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
+  }
+  
+  @override
+  void dispose() {
+    _selectedEvents.dispose();
+    super.dispose();
+  }
+  
+  List<Event> _getEventsForDay(DateTime day) {
+    return kEvents[day] ?? [];
+  }
+  
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    if (!isSameDay(_selectedDay, selectedDay)) {
+      setState(() {
+        _selectedDay = selectedDay;
+        _focusedDay = focusedDay;
+      });
+      
+      _selectedEvents.value = _getEventsForDay(selectedDay);
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TableCalendar<Event>(
+          firstDay: kFirstDay,
+          lastDay: kLastDay,
+          focusedDay: _focusedDay,
+          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+          eventLoader: _getEventsForDay,
+          onDaySelected: _onDaySelected,
+        ),
+        const SizedBox(height: 8.0),
+        Expanded(
+          child: ValueListenableBuilder<List<Event>>(
+            valueListenable: _selectedEvents,
+            builder: (context, value, _) {
+              return ListView.builder(
+                itemCount: value.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text('${value[index]}'),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+```
+
+<Info>
+This example is adapted from `example/lib/pages/events_example.dart:28-66` and `example/lib/pages/events_example.dart:96-150`
+</Info>
+
+## Event Markers
+
+By default, events are displayed as small dots below the day number. The number of markers shown is limited by `markersMaxCount`.
+
+### Default Markers
+
+```dart
+TableCalendar<Event>(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  eventLoader: _getEventsForDay,
+  calendarStyle: CalendarStyle(
+    markersMaxCount: 3,
+    markerDecoration: BoxDecoration(
+      color: Colors.blue,
+      shape: BoxShape.circle,
+    ),
+    markerSize: 7.0,
+    markerMargin: const EdgeInsets.symmetric(horizontal: 1.0),
+  ),
+);
+```
+
+<Info>
+The marker rendering logic is in `lib/src/table_calendar.dart:651-693`
+</Info>
+
+### Custom Marker Builder
+
+Provide a custom builder to fully control marker appearance:
+
+```dart
+TableCalendar<Event>(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  eventLoader: _getEventsForDay,
+  calendarBuilders: CalendarBuilders(
+    markerBuilder: (context, day, events) {
+      if (events.isEmpty) return null;
+      
+      return Positioned(
+        bottom: 1,
+        child: Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: Colors.red,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              '${events.length}',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  ),
+);
+```
+
+### Single Marker Builder
+
+Customize individual event markers:
+
+```dart
+TableCalendar<Event>(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  eventLoader: _getEventsForDay,
+  calendarBuilders: CalendarBuilders(
+    singleMarkerBuilder: (context, day, event) {
+      return Container(
+        width: 8,
+        height: 8,
+        margin: const EdgeInsets.symmetric(horizontal: 0.5),
+        decoration: BoxDecoration(
+          color: _getColorForEvent(event),
+          shape: BoxShape.circle,
+        ),
+      );
+    },
+  ),
+);
+```
+
+<Info>
+The single marker builder is called for each event, as seen in `lib/src/table_calendar.dart:706-715`
+</Info>
+
+## Events on Disabled Days
+
+By default, events are not loaded for disabled days. Enable loading for disabled days:
+
+```dart
+TableCalendar<Event>(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  eventLoader: _getEventsForDay,
+  enabledDayPredicate: (day) {
+    // Disable weekends
+    return day.weekday != DateTime.saturday && day.weekday != DateTime.sunday;
+  },
+  loadEventsForDisabledDays: true, // Load events even on disabled days
+);
+```
+
+<Info>
+This behavior is controlled in `lib/src/table_calendar.dart:651`
+</Info>
+
+## Holidays
+
+Mark specific days as holidays using the `holidayPredicate` function.
+
+### Holiday Predicate
+
+```dart
+// From lib/src/table_calendar.dart:184
+final bool Function(DateTime day)? holidayPredicate;
+```
+
+### Basic Holiday Setup
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  holidayPredicate: (day) {
+    // Every 20th day of the month will be treated as a holiday
+    return day.day == 20;
+  },
+);
+```
+
+<Info>
+This example is from `example/lib/pages/complex_example.dart:153-156`
+</Info>
+
+### Holiday List Approach
+
+```dart
+final holidays = {
+  DateTime.utc(2024, 1, 1),   // New Year
+  DateTime.utc(2024, 12, 25), // Christmas
+  DateTime.utc(2024, 7, 4),   // Independence Day
+};
+
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  holidayPredicate: (day) {
+    return holidays.any((holiday) => isSameDay(holiday, day));
+  },
+);
+```
+
+### Styling Holidays
+
+Customize the appearance of holiday days:
+
+```dart
+TableCalendar(
+  firstDay: kFirstDay,
+  lastDay: kLastDay,
+  focusedDay: _focusedDay,
+  holidayPredicate: (day) => day.day == 20,
+  calendarStyle: CalendarStyle(
+    holidayDecoration: BoxDecoration(
+      border: Border.all(color: Colors.red, width: 1.5),
+      shape: BoxShape.circle,
+    ),
+    holidayTextStyle: TextStyle(
+      color: Colors.red,
+    ),
+  ),
+);
+```
+
+## Combining Events and Holidays
+
+You can use both events and holidays simultaneously:
+
+```dart
+class _MyCalendarState extends State<MyCalendar> {
+  final holidays = {
+    DateTime.utc(2024, 1, 1),
+    DateTime.utc(2024, 12, 25),
+  };
+  
+  List<Event> _getEventsForDay(DateTime day) {
+    return kEvents[day] ?? [];
+  }
+  
+  bool _isHoliday(DateTime day) {
+    return holidays.any((holiday) => isSameDay(holiday, day));
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return TableCalendar<Event>(
+      firstDay: kFirstDay,
+      lastDay: kLastDay,
+      focusedDay: _focusedDay,
+      eventLoader: _getEventsForDay,
+      holidayPredicate: _isHoliday,
+      calendarStyle: CalendarStyle(
+        // Marker styling for events
+        markerDecoration: BoxDecoration(
+          color: Colors.blue,
+          shape: BoxShape.circle,
+        ),
+        // Holiday styling
+        holidayDecoration: BoxDecoration(
+          border: Border.all(color: Colors.red, width: 1.5),
+          shape: BoxShape.circle,
+        ),
+        holidayTextStyle: TextStyle(color: Colors.red),
+      ),
+    );
+  }
+}
+```
+
+<Info>
+The holiday state is passed to the cell content in `lib/src/table_calendar.dart:645`
+</Info>
+
+## Performance Considerations
+
+<Tip>
+**Use LinkedHashMap**: When storing events in a map, use `LinkedHashMap` with custom equality to avoid time-component issues in DateTime comparisons.
+</Tip>
+
+<Tip>
+**Efficient event lookup**: If you have many events, consider using indexed data structures or databases instead of iterating through lists.
+</Tip>
+
+<Tip>
+**Lazy loading**: The event loader is called on-demand for visible days only. Avoid expensive operations in this function.
+</Tip>
+
+<Warning>
+The `eventLoader` is called frequently during scrolling and rebuilds. Keep the function fast and avoid heavy computations or network calls.
+</Warning>
+
+## Best Practices
+
+1. **Normalize DateTime objects**: Always use `isSameDay` when comparing dates for events and holidays
+2. **Return empty lists**: Return `[]` instead of `null` from event loaders
+3. **Type safety**: Use the generic type parameter to specify your event type: `TableCalendar<Event>`
+4. **Separate concerns**: Keep event data separate from UI state
+5. **ValueNotifier for updates**: Use `ValueNotifier` for selected events to avoid unnecessary rebuilds

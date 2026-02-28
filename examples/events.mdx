@@ -1,0 +1,392 @@
+---
+title: Events
+description: Display and manage events on your calendar
+icon: calendar-check
+---
+
+This example demonstrates how to display events on calendar days and show event details when days are selected.
+
+## What You'll Learn
+
+<CardGroup cols={2}>
+  <Card title="Event Loading" icon="download">
+    Load and display events for specific days
+  </Card>
+  <Card title="Event Display" icon="list">
+    Show events in a list below the calendar
+  </Card>
+  <Card title="Generic Types" icon="code">
+    Use TableCalendar with custom event types
+  </Card>
+  <Card title="ValueNotifier" icon="bell">
+    Efficiently update event lists
+  </Card>
+</CardGroup>
+
+## Implementation
+
+<Steps>
+  <Step title="Define your event model">
+    Create a simple event class to represent calendar events.
+
+    ```dart
+    class Event {
+      final String title;
+
+      const Event(this.title);
+
+      @override
+      String toString() => title;
+    }
+    ```
+
+    <Tip>
+      You can extend this class to include additional properties like description, time, color, etc.
+    </Tip>
+  </Step>
+
+  <Step title="Set up event storage">
+    Create a map to store events. Using a `LinkedHashMap` with custom equality is recommended.
+
+    ```dart
+    import 'dart:collection';
+
+    final kEvents = LinkedHashMap<DateTime, List<Event>>(
+      equals: isSameDay,
+      hashCode: getHashCode,
+    );
+
+    int getHashCode(DateTime key) {
+      return key.day * 1000000 + key.month * 10000 + key.year;
+    }
+    ```
+
+    <Note>
+      The custom `equals` and `hashCode` ensure that dates are compared without considering the time component.
+    </Note>
+  </Step>
+
+  <Step title="Initialize state with ValueNotifier">
+    Use `ValueNotifier` to efficiently manage and listen to event list updates.
+
+    ```dart
+    class _TableEventsExampleState extends State<TableEventsExample> {
+      late final ValueNotifier<List<Event>> _selectedEvents;
+      CalendarFormat _calendarFormat = CalendarFormat.month;
+      DateTime _focusedDay = DateTime.now();
+      DateTime? _selectedDay;
+
+      @override
+      void initState() {
+        super.initState();
+        _selectedDay = _focusedDay;
+        _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
+      }
+
+      @override
+      void dispose() {
+        _selectedEvents.dispose();
+        super.dispose();
+      }
+
+      List<Event> _getEventsForDay(DateTime day) {
+        return kEvents[day] ?? [];
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Configure TableCalendar with eventLoader">
+    Add the `eventLoader` callback to tell TableCalendar how to fetch events for each day.
+
+    ```dart
+    TableCalendar<Event>(
+      firstDay: kFirstDay,
+      lastDay: kLastDay,
+      focusedDay: _focusedDay,
+      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+      calendarFormat: _calendarFormat,
+      eventLoader: _getEventsForDay,
+      startingDayOfWeek: StartingDayOfWeek.monday,
+      calendarStyle: const CalendarStyle(
+        outsideDaysVisible: false,
+      ),
+      onDaySelected: _onDaySelected,
+      onFormatChanged: (format) {
+        if (_calendarFormat != format) {
+          setState(() {
+            _calendarFormat = format;
+          });
+        }
+      },
+      onPageChanged: (focusedDay) {
+        _focusedDay = focusedDay;
+      },
+    )
+    ```
+
+    <Tip>
+      Notice the generic type `<Event>` - this tells TableCalendar what type of events you're working with.
+    </Tip>
+  </Step>
+
+  <Step title="Handle day selection and update events">
+    When a day is selected, update the event list to show events for that day.
+
+    ```dart
+    void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+      if (!isSameDay(_selectedDay, selectedDay)) {
+        setState(() {
+          _selectedDay = selectedDay;
+          _focusedDay = focusedDay;
+        });
+
+        _selectedEvents.value = _getEventsForDay(selectedDay);
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Display events in a list">
+    Use `ValueListenableBuilder` to show the events below the calendar.
+
+    ```dart
+    Expanded(
+      child: ValueListenableBuilder<List<Event>>(
+        valueListenable: _selectedEvents,
+        builder: (context, value, _) {
+          return ListView.builder(
+            itemCount: value.length,
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 4.0,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: ListTile(
+                  onTap: () => print('${value[index]}'),
+                  title: Text('${value[index]}'),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    )
+    ```
+  </Step>
+</Steps>
+
+## Complete Example
+
+<CodeGroup>
+```dart main.dart
+import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
+
+class TableEventsExample extends StatefulWidget {
+  const TableEventsExample({super.key});
+
+  @override
+  State<TableEventsExample> createState() => _TableEventsExampleState();
+}
+
+class _TableEventsExampleState extends State<TableEventsExample> {
+  late final ValueNotifier<List<Event>> _selectedEvents;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = _focusedDay;
+    _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
+  }
+
+  @override
+  void dispose() {
+    _selectedEvents.dispose();
+    super.dispose();
+  }
+
+  List<Event> _getEventsForDay(DateTime day) {
+    return kEvents[day] ?? [];
+  }
+
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    if (!isSameDay(_selectedDay, selectedDay)) {
+      setState(() {
+        _selectedDay = selectedDay;
+        _focusedDay = focusedDay;
+      });
+
+      _selectedEvents.value = _getEventsForDay(selectedDay);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('TableCalendar - Events'),
+      ),
+      body: Column(
+        children: [
+          TableCalendar<Event>(
+            firstDay: kFirstDay,
+            lastDay: kLastDay,
+            focusedDay: _focusedDay,
+            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+            calendarFormat: _calendarFormat,
+            eventLoader: _getEventsForDay,
+            startingDayOfWeek: StartingDayOfWeek.monday,
+            calendarStyle: const CalendarStyle(
+              outsideDaysVisible: false,
+            ),
+            onDaySelected: _onDaySelected,
+            onFormatChanged: (format) {
+              if (_calendarFormat != format) {
+                setState(() {
+                  _calendarFormat = format;
+                });
+              }
+            },
+            onPageChanged: (focusedDay) {
+              _focusedDay = focusedDay;
+            },
+          ),
+          const SizedBox(height: 8.0),
+          Expanded(
+            child: ValueListenableBuilder<List<Event>>(
+              valueListenable: _selectedEvents,
+              builder: (context, value, _) {
+                return ListView.builder(
+                  itemCount: value.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12.0,
+                        vertical: 4.0,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: ListTile(
+                        onTap: () => print('${value[index]}'),
+                        title: Text('${value[index]}'),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+```dart models.dart
+class Event {
+  final String title;
+
+  const Event(this.title);
+
+  @override
+  String toString() => title;
+}
+```
+
+```dart data.dart
+import 'dart:collection';
+import 'package:table_calendar/table_calendar.dart';
+
+final kEvents = LinkedHashMap<DateTime, List<Event>>(
+  equals: isSameDay,
+  hashCode: getHashCode,
+)..addAll({
+  DateTime.now(): [
+    const Event("Today's Event 1"),
+    const Event("Today's Event 2"),
+  ],
+  DateTime.now().add(const Duration(days: 1)): [
+    const Event("Tomorrow's Event"),
+  ],
+});
+
+int getHashCode(DateTime key) {
+  return key.day * 1000000 + key.month * 10000 + key.year;
+}
+```
+</CodeGroup>
+
+## Key Concepts
+
+### Event Loader
+
+The `eventLoader` callback is called for each day that's visible on the calendar. It should return a list of events for that day.
+
+```dart
+eventLoader: (day) {
+  return kEvents[day] ?? [];
+}
+```
+
+### Event Markers
+
+By default, TableCalendar displays small dots below days that have events. The number and appearance of these markers can be customized using `CalendarStyle`.
+
+### ValueNotifier Pattern
+
+<Tip>
+  Using `ValueNotifier` with `ValueListenableBuilder` is more efficient than calling `setState()` for updating the event list, as it only rebuilds the list widget instead of the entire calendar.
+</Tip>
+
+## Combining with Range Selection
+
+The events example also supports range selection. When a range is selected, events from all days in the range are displayed:
+
+```dart
+void _onRangeSelected(DateTime? start, DateTime? end, DateTime focusedDay) {
+  setState(() {
+    _selectedDay = null;
+    _focusedDay = focusedDay;
+    _rangeStart = start;
+    _rangeEnd = end;
+  });
+
+  if (start != null && end != null) {
+    _selectedEvents.value = _getEventsForRange(start, end);
+  } else if (start != null) {
+    _selectedEvents.value = _getEventsForDay(start);
+  } else if (end != null) {
+    _selectedEvents.value = _getEventsForDay(end);
+  }
+}
+
+List<Event> _getEventsForRange(DateTime start, DateTime end) {
+  final days = daysInRange(start, end);
+  return [
+    for (final d in days) ..._getEventsForDay(d),
+  ];
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Range Selection" icon="calendar-range" href="/examples/range-selection">
+    Learn how to select date ranges
+  </Card>
+  <Card title="Multi Selection" icon="calendar-days" href="/examples/multi-selection">
+    Enable multiple day selection
+  </Card>
+</CardGroup>

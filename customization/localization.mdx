@@ -1,0 +1,513 @@
+---
+title: Localization
+description: Display TableCalendar in different languages and customize date formatting
+---
+
+TableCalendar supports full localization, allowing you to display the calendar in any language supported by the `intl` package. You can customize date formats for headers, day labels, and day cells.
+
+## Setup
+
+### Installation
+
+First, add the `intl` package to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  table_calendar: ^3.1.3
+  intl: ^0.18.0
+```
+
+### Initialize Date Formatting
+
+Before using locales, initialize date formatting in your `main()` function:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
+void main() {
+  initializeDateFormatting().then((_) => runApp(MyApp()));
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'TableCalendar Demo',
+      home: MyHomePage(),
+    );
+  }
+}
+```
+
+## Using a Locale
+
+### Basic Usage
+
+Pass a locale string to the `locale` property:
+
+```dart
+TableCalendar(
+  firstDay: DateTime.utc(2010, 1, 1),
+  lastDay: DateTime.utc(2030, 12, 31),
+  focusedDay: DateTime.now(),
+  locale: 'pl_PL',
+)
+```
+
+### Available Locales
+
+<Tabs>
+  <Tab title="English (US)">
+    ```dart
+    TableCalendar(
+      locale: 'en_US',
+      // ...
+    )
+    ```
+    
+    Displays: January 2024, February 2024, etc.
+  </Tab>
+  
+  <Tab title="Polish">
+    ```dart
+    TableCalendar(
+      locale: 'pl_PL',
+      // ...
+    )
+    ```
+    
+    Displays: Styczeń 2024, Luty 2024, etc.
+  </Tab>
+  
+  <Tab title="French">
+    ```dart
+    TableCalendar(
+      locale: 'fr_FR',
+      // ...
+    )
+    ```
+    
+    Displays: Janvier 2024, Février 2024, etc.
+  </Tab>
+  
+  <Tab title="Chinese">
+    ```dart
+    TableCalendar(
+      locale: 'zh_CN',
+      // ...
+    )
+    ```
+    
+    Displays: 2024年1月, 2024年2月, etc.
+  </Tab>
+  
+  <Tab title="Spanish">
+    ```dart
+    TableCalendar(
+      locale: 'es_ES',
+      // ...
+    )
+    ```
+    
+    Displays: Enero 2024, Febrero 2024, etc.
+  </Tab>
+  
+  <Tab title="German">
+    ```dart
+    TableCalendar(
+      locale: 'de_DE',
+      // ...
+    )
+    ```
+    
+    Displays: Januar 2024, Februar 2024, etc.
+  </Tab>
+  
+  <Tab title="Japanese">
+    ```dart
+    TableCalendar(
+      locale: 'ja_JP',
+      // ...
+    )
+    ```
+    
+    Displays: 2024年1月, 2024年2月, etc.
+  </Tab>
+</Tabs>
+
+## Custom Date Formatting
+
+### Header Title Format
+
+Customize the header title format using `titleTextFormatter`:
+
+```dart
+import 'package:intl/intl.dart';
+
+TableCalendar(
+  locale: 'en_US',
+  headerStyle: HeaderStyle(
+    titleTextFormatter: (date, locale) => 
+      DateFormat.yM(locale).format(date),
+  ),
+)
+```
+
+<Accordion title="Common Header Formats">
+  ```dart
+  // Year and month: "1/2024"
+  titleTextFormatter: (date, locale) => DateFormat.yM(locale).format(date)
+  
+  // Month and year: "January 2024"
+  titleTextFormatter: (date, locale) => DateFormat.yMMMM(locale).format(date)
+  
+  // Abbreviated month: "Jan 2024"
+  titleTextFormatter: (date, locale) => DateFormat.yMMM(locale).format(date)
+  
+  // Custom format: "2024 - January"
+  titleTextFormatter: (date, locale) => 
+    '${date.year} - ${DateFormat.MMMM(locale).format(date)}'
+  ```
+</Accordion>
+
+### Days of Week Format
+
+Customize day of week labels using `dowTextFormatter`:
+
+```dart
+import 'package:intl/intl.dart';
+
+TableCalendar(
+  locale: 'en_US',
+  daysOfWeekStyle: DaysOfWeekStyle(
+    dowTextFormatter: (date, locale) => 
+      DateFormat.E(locale).format(date)[0],
+  ),
+)
+```
+
+<Accordion title="Common Day of Week Formats">
+  ```dart
+  // First letter only: "M", "T", "W"
+  dowTextFormatter: (date, locale) => DateFormat.E(locale).format(date)[0]
+  
+  // Abbreviated: "Mon", "Tue", "Wed"
+  dowTextFormatter: (date, locale) => DateFormat.E(locale).format(date)
+  
+  // Full name: "Monday", "Tuesday"
+  dowTextFormatter: (date, locale) => DateFormat.EEEE(locale).format(date)
+  
+  // First two letters: "Mo", "Tu", "We"
+  dowTextFormatter: (date, locale) => 
+    DateFormat.E(locale).format(date).substring(0, 2)
+  ```
+</Accordion>
+
+### Day Cell Format
+
+Customize day cell text using `dayTextFormatter`:
+
+```dart
+import 'package:intl/intl.dart';
+
+TableCalendar(
+  locale: 'en_US',
+  calendarStyle: CalendarStyle(
+    dayTextFormatter: (date, locale) => 
+      DateFormat.d(locale).format(date),
+  ),
+)
+```
+
+<Accordion title="Common Day Cell Formats">
+  ```dart
+  // Day number only: "1", "15", "31"
+  dayTextFormatter: (date, locale) => DateFormat.d(locale).format(date)
+  
+  // Day with leading zero: "01", "15", "31"
+  dayTextFormatter: (date, locale) => DateFormat('dd', locale).format(date)
+  
+  // Day with suffix: "1st", "2nd", "3rd"
+  dayTextFormatter: (date, locale) {
+    final day = date.day;
+    if (day >= 11 && day <= 13) return '${day}th';
+    switch (day % 10) {
+      case 1: return '${day}st';
+      case 2: return '${day}nd';
+      case 3: return '${day}rd';
+      default: return '${day}th';
+    }
+  }
+  ```
+</Accordion>
+
+## Format Button Localization
+
+<Note>
+  The format button text is not automatically localized. You need to provide translated strings manually.
+</Note>
+
+Use `availableCalendarFormats` to customize format button text:
+
+```dart
+TableCalendar(
+  availableCalendarFormats: const {
+    CalendarFormat.month: 'Month',
+    CalendarFormat.twoWeeks: '2 weeks',
+    CalendarFormat.week: 'Week',
+  },
+)
+```
+
+### Localized Format Button Examples
+
+<Tabs>
+  <Tab title="English">
+    ```dart
+    availableCalendarFormats: const {
+      CalendarFormat.month: 'Month',
+      CalendarFormat.twoWeeks: '2 weeks',
+      CalendarFormat.week: 'Week',
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Polish">
+    ```dart
+    availableCalendarFormats: const {
+      CalendarFormat.month: 'Miesiąc',
+      CalendarFormat.twoWeeks: '2 tygodnie',
+      CalendarFormat.week: 'Tydzień',
+    }
+    ```
+  </Tab>
+  
+  <Tab title="French">
+    ```dart
+    availableCalendarFormats: const {
+      CalendarFormat.month: 'Mois',
+      CalendarFormat.twoWeeks: '2 semaines',
+      CalendarFormat.week: 'Semaine',
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Spanish">
+    ```dart
+    availableCalendarFormats: const {
+      CalendarFormat.month: 'Mes',
+      CalendarFormat.twoWeeks: '2 semanas',
+      CalendarFormat.week: 'Semana',
+    }
+    ```
+  </Tab>
+</Tabs>
+
+Alternatively, hide the format button:
+
+```dart
+TableCalendar(
+  headerStyle: HeaderStyle(
+    formatButtonVisible: false,
+  ),
+)
+```
+
+## Complete Localization Example
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
+void main() {
+  initializeDateFormatting().then((_) => runApp(MyApp()));
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Localized Calendar',
+      home: LocalizedCalendar(),
+    );
+  }
+}
+
+class LocalizedCalendar extends StatefulWidget {
+  @override
+  _LocalizedCalendarState createState() => _LocalizedCalendarState();
+}
+
+class _LocalizedCalendarState extends State<LocalizedCalendar> {
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  String _currentLocale = 'en_US';
+  
+  // Localized format button labels
+  Map<String, Map<CalendarFormat, String>> _formatLabels = {
+    'en_US': {
+      CalendarFormat.month: 'Month',
+      CalendarFormat.twoWeeks: '2 weeks',
+      CalendarFormat.week: 'Week',
+    },
+    'es_ES': {
+      CalendarFormat.month: 'Mes',
+      CalendarFormat.twoWeeks: '2 semanas',
+      CalendarFormat.week: 'Semana',
+    },
+    'fr_FR': {
+      CalendarFormat.month: 'Mois',
+      CalendarFormat.twoWeeks: '2 semaines',
+      CalendarFormat.week: 'Semaine',
+    },
+  };
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Localized Calendar'),
+        actions: [
+          // Locale switcher
+          PopupMenuButton<String>(
+            onSelected: (locale) {
+              setState(() {
+                _currentLocale = locale;
+              });
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(value: 'en_US', child: Text('English')),
+              PopupMenuItem(value: 'es_ES', child: Text('Español')),
+              PopupMenuItem(value: 'fr_FR', child: Text('Français')),
+            ],
+          ),
+        ],
+      ),
+      body: TableCalendar(
+        firstDay: DateTime.utc(2010, 1, 1),
+        lastDay: DateTime.utc(2030, 12, 31),
+        focusedDay: _focusedDay,
+        locale: _currentLocale,
+        calendarFormat: _calendarFormat,
+        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+        
+        // Localized format button
+        availableCalendarFormats: _formatLabels[_currentLocale]!,
+        
+        // Custom header formatting
+        headerStyle: HeaderStyle(
+          titleTextFormatter: (date, locale) =>
+            DateFormat.yMMMM(locale).format(date),
+        ),
+        
+        // Custom day of week formatting
+        daysOfWeekStyle: DaysOfWeekStyle(
+          dowTextFormatter: (date, locale) =>
+            DateFormat.E(locale).format(date).substring(0, 3),
+        ),
+        
+        // Custom day cell formatting
+        calendarStyle: CalendarStyle(
+          dayTextFormatter: (date, locale) =>
+            DateFormat.d(locale).format(date),
+        ),
+        
+        onDaySelected: (selectedDay, focusedDay) {
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+        },
+        onFormatChanged: (format) {
+          setState(() {
+            _calendarFormat = format;
+          });
+        },
+        onPageChanged: (focusedDay) {
+          _focusedDay = focusedDay;
+        },
+      ),
+    );
+  }
+}
+```
+
+## Using Device Locale
+
+To automatically use the device's locale:
+
+```dart
+import 'package:flutter/material.dart';
+
+class DeviceLocaleCalendar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Get device locale
+    final locale = Localizations.localeOf(context).toString();
+    
+    return TableCalendar(
+      firstDay: DateTime.utc(2010, 1, 1),
+      lastDay: DateTime.utc(2030, 12, 31),
+      focusedDay: DateTime.now(),
+      locale: locale,
+    );
+  }
+}
+```
+
+## Right-to-Left (RTL) Support
+
+TableCalendar automatically supports RTL languages when the app's `Directionality` is set to RTL:
+
+```dart
+Directionality(
+  textDirection: TextDirection.rtl,
+  child: TableCalendar(
+    locale: 'ar_SA', // Arabic
+    firstDay: DateTime.utc(2010, 1, 1),
+    lastDay: DateTime.utc(2030, 12, 31),
+    focusedDay: DateTime.now(),
+  ),
+)
+```
+
+## Starting Day of Week
+
+Customize which day the week starts on:
+
+```dart
+TableCalendar(
+  startingDayOfWeek: StartingDayOfWeek.monday,
+)
+```
+
+<ParamField path="startingDayOfWeek" type="StartingDayOfWeek">
+  Available values:
+  - `StartingDayOfWeek.monday`
+  - `StartingDayOfWeek.tuesday`
+  - `StartingDayOfWeek.wednesday`
+  - `StartingDayOfWeek.thursday`
+  - `StartingDayOfWeek.friday`
+  - `StartingDayOfWeek.saturday`
+  - `StartingDayOfWeek.sunday`
+</ParamField>
+
+## Best Practices
+
+<Tip>
+  Always initialize date formatting in `main()` before running your app to avoid runtime errors.
+</Tip>
+
+<Warning>
+  If you don't specify a locale, the default system locale will be used. This may produce unexpected results if the device locale isn't initialized.
+</Warning>
+
+<Note>
+  The `intl` package supports a wide range of locales. See the [intl package documentation](https://pub.dev/packages/intl) for a complete list.
+</Note>

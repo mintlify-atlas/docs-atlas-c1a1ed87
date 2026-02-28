@@ -1,0 +1,158 @@
+---
+title: Installation
+description: Add TableCalendar to your Flutter project
+---
+
+Get started with TableCalendar by adding it to your Flutter project. The package is available on pub.dev and requires Flutter SDK 3.0.0 or higher.
+
+## Add the dependency
+
+<Steps>
+  <Step title="Open your pubspec.yaml file">
+    Navigate to your project's `pubspec.yaml` file in the root directory.
+  </Step>
+  
+  <Step title="Add table_calendar to dependencies">
+    Add the following line under the `dependencies` section:
+    
+    ```yaml pubspec.yaml
+    dependencies:
+      flutter:
+        sdk: flutter
+      table_calendar: ^3.1.3
+    ```
+    
+    <Info>
+      The `^` symbol means your project will use version 3.1.3 or any compatible version with non-breaking changes.
+    </Info>
+  </Step>
+  
+  <Step title="Install the package">
+    Run the following command in your terminal:
+    
+    ```bash
+    flutter pub get
+    ```
+    
+    This downloads the package and its dependencies to your project.
+  </Step>
+  
+  <Step title="Import the package">
+    In your Dart file, import TableCalendar:
+    
+    ```dart
+    import 'package:table_calendar/table_calendar.dart';
+    ```
+  </Step>
+</Steps>
+
+## Additional dependencies
+
+TableCalendar automatically includes the following dependencies:
+
+- **intl** (^0.20.1) - For internationalization and date formatting
+- **simple_gesture_detector** (^0.2.0) - For gesture handling
+
+You don't need to add these manually, but you may need to initialize date formatting if you plan to use locales.
+
+## Locale support setup (optional)
+
+If you want to display the calendar in different languages, you'll need to initialize date formatting.
+
+<Steps>
+  <Step title="Ensure intl package is available">
+    The `intl` package is already included as a dependency of TableCalendar, so you don't need to add it separately.
+  </Step>
+  
+  <Step title="Initialize date formatting">
+    Modify your `main.dart` file to initialize date formatting before running your app:
+    
+    ```dart main.dart
+    import 'package:flutter/material.dart';
+    import 'package:intl/date_symbol_data_local.dart';
+    
+    void main() {
+      initializeDateFormatting().then((_) => runApp(MyApp()));
+    }
+    
+    class MyApp extends StatelessWidget {
+      @override
+      Widget build(BuildContext context) {
+        return MaterialApp(
+          title: 'TableCalendar Demo',
+          home: MyHomePage(),
+        );
+      }
+    }
+    ```
+    
+    <Tip>
+      This initialization step is only required if you plan to use the `locale` property to display the calendar in different languages.
+    </Tip>
+  </Step>
+</Steps>
+
+## Version requirements
+
+<Note>
+  - **Flutter SDK**: 3.0.0 or higher
+  - **Dart SDK**: Compatible with Flutter 3.0.0+
+  - **Current version**: 3.1.3
+</Note>
+
+## Verify installation
+
+To verify that TableCalendar is installed correctly, try importing it in a Dart file:
+
+```dart
+import 'package:table_calendar/table_calendar.dart';
+
+void main() {
+  // If this compiles without errors, installation was successful
+  print('TableCalendar is installed!');
+}
+```
+
+Run `flutter analyze` to check for any import errors:
+
+```bash
+flutter analyze
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Package not found error">
+    If you see an error that the package cannot be found:
+    
+    1. Make sure you saved `pubspec.yaml` after editing
+    2. Run `flutter pub get` again
+    3. Try `flutter clean` followed by `flutter pub get`
+    4. Restart your IDE/editor
+  </Accordion>
+  
+  <Accordion title="Version conflict errors">
+    If you encounter dependency conflicts:
+    
+    1. Check that your Flutter SDK version is 3.0.0 or higher by running `flutter --version`
+    2. Update Flutter if needed: `flutter upgrade`
+    3. Try using a specific version instead of `^3.1.3` if conflicts persist
+  </Accordion>
+  
+  <Accordion title="Import errors">
+    If the import statement shows an error:
+    
+    1. Ensure `flutter pub get` completed successfully
+    2. Check that your IDE has indexed the new package (this may take a moment)
+    3. Restart your IDE/editor
+    4. Try running `flutter pub cache repair`
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+Now that you have TableCalendar installed, you're ready to build your first calendar:
+
+<Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+  Create your first working calendar in minutes
+</Card>

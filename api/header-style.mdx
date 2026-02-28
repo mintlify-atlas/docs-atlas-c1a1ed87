@@ -1,0 +1,299 @@
+---
+title: HeaderStyle
+description: Styling and configuration for TableCalendar's header
+---
+
+Class containing styling and configuration of `TableCalendar`'s header, including title, format button, and navigation chevrons.
+
+## Constructor
+
+```dart
+const HeaderStyle({
+  bool titleCentered = false,
+  bool formatButtonVisible = true,
+  bool formatButtonShowsNext = true,
+  TextFormatter? titleTextFormatter,
+  TextStyle titleTextStyle = const TextStyle(fontSize: 17.0),
+  TextStyle formatButtonTextStyle = const TextStyle(fontSize: 14.0),
+  BoxDecoration formatButtonDecoration = const BoxDecoration(...),
+  EdgeInsets headerMargin = EdgeInsets.zero,
+  EdgeInsets headerPadding = const EdgeInsets.symmetric(vertical: 8.0),
+  EdgeInsets formatButtonPadding = const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+  EdgeInsets leftChevronPadding = const EdgeInsets.all(12.0),
+  EdgeInsets rightChevronPadding = const EdgeInsets.all(12.0),
+  EdgeInsets leftChevronMargin = const EdgeInsets.symmetric(horizontal: 8.0),
+  EdgeInsets rightChevronMargin = const EdgeInsets.symmetric(horizontal: 8.0),
+  Widget leftChevronIcon = const Icon(Icons.chevron_left),
+  Widget rightChevronIcon = const Icon(Icons.chevron_right),
+  bool leftChevronVisible = true,
+  bool rightChevronVisible = true,
+  BoxDecoration decoration = const BoxDecoration(),
+});
+```
+
+## Properties
+
+### Title Configuration
+
+<ParamField path="titleCentered" type="bool" default="false">
+  Responsible for making title Text centered.
+</ParamField>
+
+<ParamField path="titleTextStyle" type="TextStyle" default="TextStyle(fontSize: 17.0)">
+  Style for title Text (month-year) displayed in header.
+</ParamField>
+
+<ParamField path="titleTextFormatter" type="TextFormatter?" default="null">
+  Use to customize header's title text (e.g. with different `DateFormat`).
+  You can use `String` transformations to further customize the text.
+  Defaults to simple `'yMMMM'` format (i.e. January 2019, February 2019, March 2019, etc.).
+  
+  Example usage:
+  ```dart
+  titleTextFormatter: (date, locale) => DateFormat.yM(locale).format(date),
+  ```
+</ParamField>
+
+### Format Button Configuration
+
+<ParamField path="formatButtonVisible" type="bool" default="true">
+  Responsible for FormatButton visibility.
+</ParamField>
+
+<ParamField path="formatButtonShowsNext" type="bool" default="true">
+  Controls the text inside FormatButton.
+  - `true` - the button will show next CalendarFormat
+  - `false` - the button will show current CalendarFormat
+</ParamField>
+
+<ParamField path="formatButtonTextStyle" type="TextStyle" default="TextStyle(fontSize: 14.0)">
+  Style for FormatButton `Text`.
+</ParamField>
+
+<ParamField path="formatButtonDecoration" type="BoxDecoration" default="BoxDecoration with border and border radius">
+  Background `Decoration` for FormatButton.
+  
+  Default includes a border and rounded corners with radius of 12.0.
+</ParamField>
+
+<ParamField path="formatButtonPadding" type="EdgeInsets" default="EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0)">
+  Internal padding of FormatButton.
+</ParamField>
+
+### Header Layout
+
+<ParamField path="headerPadding" type="EdgeInsets" default="EdgeInsets.symmetric(vertical: 8.0)">
+  Internal padding of the whole header.
+</ParamField>
+
+<ParamField path="headerMargin" type="EdgeInsets" default="EdgeInsets.zero">
+  External margin of the whole header.
+</ParamField>
+
+<ParamField path="decoration" type="BoxDecoration" default="BoxDecoration()">
+  Decoration of the header.
+</ParamField>
+
+### Left Chevron Configuration
+
+<ParamField path="leftChevronIcon" type="Widget" default="Icon(Icons.chevron_left)">
+  Widget used for left chevron.
+  
+  Tapping on it will navigate to previous calendar page.
+</ParamField>
+
+<ParamField path="leftChevronVisible" type="bool" default="true">
+  Determines left chevron's visibility.
+</ParamField>
+
+<ParamField path="leftChevronPadding" type="EdgeInsets" default="EdgeInsets.all(12.0)">
+  Internal padding of left chevron.
+  Determines how much of ripple animation is visible during taps.
+</ParamField>
+
+<ParamField path="leftChevronMargin" type="EdgeInsets" default="EdgeInsets.symmetric(horizontal: 8.0)">
+  External margin of left chevron.
+</ParamField>
+
+### Right Chevron Configuration
+
+<ParamField path="rightChevronIcon" type="Widget" default="Icon(Icons.chevron_right)">
+  Widget used for right chevron.
+  
+  Tapping on it will navigate to next calendar page.
+</ParamField>
+
+<ParamField path="rightChevronVisible" type="bool" default="true">
+  Determines right chevron's visibility.
+</ParamField>
+
+<ParamField path="rightChevronPadding" type="EdgeInsets" default="EdgeInsets.all(12.0)">
+  Internal padding of right chevron.
+  Determines how much of ripple animation is visible during taps.
+</ParamField>
+
+<ParamField path="rightChevronMargin" type="EdgeInsets" default="EdgeInsets.symmetric(horizontal: 8.0)">
+  External margin of right chevron.
+</ParamField>
+
+## Example Usage
+
+### Basic Header Styling
+
+```dart
+TableCalendar(
+  headerStyle: HeaderStyle(
+    titleCentered: true,
+    formatButtonVisible: false,
+    titleTextStyle: TextStyle(
+      fontSize: 20.0,
+      fontWeight: FontWeight.bold,
+      color: Colors.blue,
+    ),
+  ),
+  // ... other properties
+);
+```
+
+### Custom Title Format
+
+```dart
+TableCalendar(
+  headerStyle: HeaderStyle(
+    titleTextFormatter: (date, locale) {
+      // Show "January '24" format
+      return DateFormat.yMMM(locale).format(date);
+    },
+    titleTextStyle: TextStyle(
+      fontSize: 18.0,
+      fontWeight: FontWeight.w600,
+    ),
+  ),
+  // ... other properties
+);
+```
+
+### Custom Format Button
+
+```dart
+TableCalendar(
+  headerStyle: HeaderStyle(
+    formatButtonVisible: true,
+    formatButtonShowsNext: false,  // Show current format
+    formatButtonTextStyle: TextStyle(
+      fontSize: 12.0,
+      color: Colors.white,
+    ),
+    formatButtonDecoration: BoxDecoration(
+      color: Colors.blue,
+      borderRadius: BorderRadius.circular(20.0),
+    ),
+    formatButtonPadding: EdgeInsets.symmetric(
+      horizontal: 16.0,
+      vertical: 8.0,
+    ),
+  ),
+  // ... other properties
+);
+```
+
+### Custom Chevron Icons
+
+```dart
+TableCalendar(
+  headerStyle: HeaderStyle(
+    leftChevronIcon: Icon(
+      Icons.arrow_back_ios,
+      color: Colors.blue,
+      size: 20.0,
+    ),
+    rightChevronIcon: Icon(
+      Icons.arrow_forward_ios,
+      color: Colors.blue,
+      size: 20.0,
+    ),
+    leftChevronPadding: EdgeInsets.all(8.0),
+    rightChevronPadding: EdgeInsets.all(8.0),
+  ),
+  // ... other properties
+);
+```
+
+### Hide Navigation Chevrons
+
+```dart
+TableCalendar(
+  headerStyle: HeaderStyle(
+    leftChevronVisible: false,
+    rightChevronVisible: false,
+    titleCentered: true,
+  ),
+  // ... other properties
+);
+```
+
+### Header with Background
+
+```dart
+TableCalendar(
+  headerStyle: HeaderStyle(
+    decoration: BoxDecoration(
+      color: Colors.blue,
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(16.0),
+      ),
+    ),
+    headerPadding: EdgeInsets.symmetric(
+      vertical: 16.0,
+      horizontal: 8.0,
+    ),
+    titleTextStyle: TextStyle(
+      fontSize: 18.0,
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+    ),
+    leftChevronIcon: Icon(
+      Icons.chevron_left,
+      color: Colors.white,
+    ),
+    rightChevronIcon: Icon(
+      Icons.chevron_right,
+      color: Colors.white,
+    ),
+    formatButtonVisible: false,
+  ),
+  // ... other properties
+);
+```
+
+### Compact Header
+
+```dart
+TableCalendar(
+  headerStyle: HeaderStyle(
+    headerPadding: EdgeInsets.symmetric(vertical: 4.0),
+    headerMargin: EdgeInsets.zero,
+    titleTextStyle: TextStyle(fontSize: 15.0),
+    leftChevronPadding: EdgeInsets.all(8.0),
+    rightChevronPadding: EdgeInsets.all(8.0),
+    leftChevronMargin: EdgeInsets.symmetric(horizontal: 4.0),
+    rightChevronMargin: EdgeInsets.symmetric(horizontal: 4.0),
+    formatButtonVisible: false,
+  ),
+  // ... other properties
+);
+```
+
+## Tips
+
+<Note>
+  The `titleTextFormatter` is useful for internationalization and custom date formats. It receives the focused date and locale, allowing you to use `intl` package's `DateFormat` for localized formatting.
+</Note>
+
+<Note>
+  To create a minimalist header, hide the format button with `formatButtonVisible: false` and optionally hide chevrons with `leftChevronVisible: false` and `rightChevronVisible: false`.
+</Note>
+
+<Note>
+  The chevron padding affects the tap target size and ripple effect size. Increase it for larger touch targets on mobile devices.
+</Note>

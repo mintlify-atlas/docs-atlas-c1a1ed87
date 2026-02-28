@@ -1,0 +1,301 @@
+---
+title: Utility Functions
+description: Helper functions and type definitions for TableCalendar
+---
+
+## Overview
+
+TableCalendar provides several utility functions and type definitions to help you work with dates and customize the calendar's appearance.
+
+## Utility Functions
+
+### isSameDay
+
+Checks if two DateTime objects represent the same day.
+
+```dart
+bool isSameDay(DateTime? a, DateTime? b)
+```
+
+<ParamField path="a" type="DateTime?">
+  First date to compare
+</ParamField>
+
+<ParamField path="b" type="DateTime?">
+  Second date to compare
+</ParamField>
+
+<ResponseField name="return" type="bool">
+  Returns `true` if both dates represent the same day, `false` if either is null or they represent different days
+</ResponseField>
+
+#### Example
+
+```dart
+final date1 = DateTime(2024, 1, 15, 10, 30);
+final date2 = DateTime(2024, 1, 15, 18, 45);
+final date3 = DateTime(2024, 1, 16);
+
+isSameDay(date1, date2); // true - same day, different times
+isSameDay(date1, date3); // false - different days
+isSameDay(date1, null); // false - null argument
+```
+
+### normalizeDate
+
+Returns a date in UTC format without its time component.
+
+```dart
+DateTime normalizeDate(DateTime date)
+```
+
+<ParamField path="date" type="DateTime" required>
+  The date to normalize
+</ParamField>
+
+<ResponseField name="return" type="DateTime">
+  A new DateTime in UTC with only year, month, and day components
+</ResponseField>
+
+#### Example
+
+```dart
+final date = DateTime(2024, 1, 15, 14, 30, 45);
+final normalized = normalizeDate(date);
+// Result: DateTime.utc(2024, 1, 15) - time components removed
+```
+
+<Note>
+  This function is particularly useful when comparing dates without caring about the time component.
+</Note>
+
+### getWeekdayNumber
+
+Returns a numerical value associated with a given weekday.
+
+```dart
+int getWeekdayNumber(StartingDayOfWeek weekday)
+```
+
+<ParamField path="weekday" type="StartingDayOfWeek" required>
+  The weekday enum value
+</ParamField>
+
+<ResponseField name="return" type="int">
+  Returns 1 for `StartingDayOfWeek.monday`, incrementing up to 7 for `StartingDayOfWeek.sunday`
+</ResponseField>
+
+#### Example
+
+```dart
+getWeekdayNumber(StartingDayOfWeek.monday);    // 1
+getWeekdayNumber(StartingDayOfWeek.wednesday); // 3
+getWeekdayNumber(StartingDayOfWeek.sunday);    // 7
+```
+
+## Type Definitions
+
+### DayBuilder
+
+Signature for a function that creates a widget for a given day.
+
+```dart
+typedef DayBuilder = Widget? Function(BuildContext context, DateTime day);
+```
+
+<ParamField path="context" type="BuildContext">
+  The build context
+</ParamField>
+
+<ParamField path="day" type="DateTime">
+  The date for which to build a widget
+</ParamField>
+
+<ResponseField name="return" type="Widget?">
+  A widget to display for the day, or null to use the default
+</ResponseField>
+
+#### Example
+
+```dart
+DayBuilder myDayBuilder = (context, day) {
+  if (day.weekday == DateTime.saturday) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blue.shade100,
+        shape: BoxShape.circle,
+      ),
+      child: Center(child: Text('${day.day}')),
+    );
+  }
+  return null; // Use default for other days
+};
+```
+
+### FocusedDayBuilder
+
+Signature for a function that creates a widget for a given day with access to the currently focused day.
+
+```dart
+typedef FocusedDayBuilder = Widget? Function(
+  BuildContext context,
+  DateTime day,
+  DateTime focusedDay,
+);
+```
+
+<ParamField path="context" type="BuildContext">
+  The build context
+</ParamField>
+
+<ParamField path="day" type="DateTime">
+  The date for which to build a widget
+</ParamField>
+
+<ParamField path="focusedDay" type="DateTime">
+  The currently focused date in the calendar
+</ParamField>
+
+<ResponseField name="return" type="Widget?">
+  A widget to display for the day, or null to use the default
+</ResponseField>
+
+#### Example
+
+```dart
+FocusedDayBuilder myFocusedDayBuilder = (context, day, focusedDay) {
+  final isSameMonth = day.month == focusedDay.month;
+  return Container(
+    decoration: BoxDecoration(
+      color: isSameMonth ? Colors.white : Colors.grey.shade200,
+      shape: BoxShape.circle,
+    ),
+    child: Center(
+      child: Text(
+        '${day.day}',
+        style: TextStyle(
+          color: isSameMonth ? Colors.black : Colors.grey,
+        ),
+      ),
+    ),
+  );
+};
+```
+
+### TextFormatter
+
+Signature for a function returning text that can be localized and formatted.
+
+```dart
+typedef TextFormatter = String Function(DateTime date, dynamic locale);
+```
+
+<ParamField path="date" type="DateTime">
+  The date to format
+</ParamField>
+
+<ParamField path="locale" type="dynamic">
+  The locale to use for formatting (typically a string like 'en_US')
+</ParamField>
+
+<ResponseField name="return" type="String">
+  The formatted date string
+</ResponseField>
+
+#### Example
+
+```dart
+import 'package:intl/intl.dart';
+
+TextFormatter customFormatter = (date, locale) {
+  return DateFormat.yMMMMd(locale).format(date);
+};
+
+// Usage in DaysOfWeekStyle
+DaysOfWeekStyle(
+  dowTextFormatter: (date, locale) {
+    return DateFormat.E(locale).format(date).substring(0, 1);
+  },
+)
+```
+
+<Note>
+  The `TextFormatter` typedef is commonly used with `DaysOfWeekStyle.dowTextFormatter` and `HeaderStyle.titleTextFormatter` to customize date display.
+</Note>
+
+### OnDaySelected
+
+Callback signature for when a day is selected.
+
+```dart
+typedef OnDaySelected = void Function(
+  DateTime selectedDay,
+  DateTime focusedDay,
+);
+```
+
+<ParamField path="selectedDay" type="DateTime">
+  The day that was selected
+</ParamField>
+
+<ParamField path="focusedDay" type="DateTime">
+  The currently focused day
+</ParamField>
+
+#### Example
+
+```dart
+TableCalendar(
+  onDaySelected: (selectedDay, focusedDay) {
+    setState(() {
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
+    });
+  },
+  // ...
+)
+```
+
+### OnRangeSelected
+
+Callback signature for when a date range is selected.
+
+```dart
+typedef OnRangeSelected = void Function(
+  DateTime? start,
+  DateTime? end,
+  DateTime focusedDay,
+);
+```
+
+<ParamField path="start" type="DateTime?">
+  The start of the selected range (null if range selection is incomplete)
+</ParamField>
+
+<ParamField path="end" type="DateTime?">
+  The end of the selected range (null if range selection is incomplete)
+</ParamField>
+
+<ParamField path="focusedDay" type="DateTime">
+  The currently focused day
+</ParamField>
+
+#### Example
+
+```dart
+TableCalendar(
+  rangeSelectionMode: RangeSelectionMode.toggledOn,
+  onRangeSelected: (start, end, focusedDay) {
+    setState(() {
+      _rangeStart = start;
+      _rangeEnd = end;
+      _focusedDay = focusedDay;
+    });
+    
+    if (start != null && end != null) {
+      print('Range selected: ${start} to ${end}');
+    }
+  },
+  // ...
+)
+```
